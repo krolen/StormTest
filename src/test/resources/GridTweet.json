@@ -1,0 +1,33 @@
+{
+  "id": "TT598890165541691393",
+  "dataSource": "TWITTER",
+  "contents": "RT@Ali_mush_alamri:????????????????????????????????????????????.http://t.co/9eomYOFEnW",
+  "contentType": "TEXT",
+  "postType": "STATUS",
+  "createDate": 1431621516000,
+  "permaLink": "http://twitter.com/KMH123451/statuses/598890165541691393",
+  "docId": "598890165541691393",
+  "refDocId": "TT596728263780634624",
+  "refUserId": "TT2813174670",
+  "msgTags": [
+    "TT2813174670=;==????????????=;==Ali_mush_alamri"
+  ],
+  "actorId": "TT986946475",
+  "actorScreenName": "KMH123451",
+  "actorName": "??????",
+  "actorIconUrl": "http://pbs.twimg.com/profile_images/598283770152820736/7RV5Y0CW_normal.jpg",
+  "postSource": "<ahref=\"http://twitter.com/download/iphone\"rel=\"nofollow\">TwitterforiPhone</a>",
+  "lang": "ar",
+  "attachments": [
+    {
+      "type": "IMAGE",
+      "href": "http://twitter.com/Ali_mush_alamri/status/596728263780634624/photo/1"
+    }
+  ],
+  "influenceScore": 5,
+  "profanityScore": 2,
+  "followerCount": 327,
+  "friendCount": 385,
+  "favoriteCount": 646,
+  "refUserIconUrl": "http://pbs.twimg.com/profile_images/569628408661811200/zDAWGeN7_normal.jpeg"
+}
