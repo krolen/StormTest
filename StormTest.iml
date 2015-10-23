@@ -13,10 +13,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Maven: org.twitter4j:twitter4j-core:4.0.3" level="project" />
+    <orderEntry type="library" name="Maven: org.twitter4j:twitter4j-stream:4.0.3" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.5.3" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.5.3" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.5.0" level="project" />
-    <orderEntry type="library" name="Maven: org.apache.storm:storm-core:0.9.4" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.storm:storm-core:0.9.5" level="project" />
     <orderEntry type="library" name="Maven: org.clojure:clojure:1.5.1" level="project" />
     <orderEntry type="library" name="Maven: clj-time:clj-time:0.4.1" level="project" />
     <orderEntry type="library" name="Maven: joda-time:joda-time:2.0" level="project" />
@@ -56,7 +58,7 @@
     <orderEntry type="library" name="Maven: ch.qos.logback:logback-classic:1.0.13" level="project" />
     <orderEntry type="library" name="Maven: ch.qos.logback:logback-core:1.0.13" level="project" />
     <orderEntry type="library" name="Maven: jline:jline:2.11" level="project" />
-    <orderEntry type="library" name="Maven: org.apache.storm:storm-kafka:0.9.4" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.storm:storm-kafka:0.9.5" level="project" />
     <orderEntry type="library" name="Maven: org.apache.curator:curator-framework:2.5.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.curator:curator-client:2.5.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.guava:guava:16.0.1" level="project" />

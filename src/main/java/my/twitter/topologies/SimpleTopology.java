@@ -33,7 +33,8 @@ public class SimpleTopology {
 
 
   private IRichSpout createKafkaSpout() {
-    BrokerHosts zkhosts = new ZkHosts("PUT DATA HERE");
+    BrokerHosts zkhosts = new ZkHosts("54.193.49.78:2181,54.193.49.64:2181,54.193.51.90:2181,54.193.42.254:2181");
+    //    BrokerHosts zkhosts = new ZkHosts("PUT DATA HERE");
     String topic = "tweets";
     String zkRoot = "";
     String consumerGroupId = "storm-test";
