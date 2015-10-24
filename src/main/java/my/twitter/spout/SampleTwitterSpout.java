@@ -11,9 +11,11 @@ import twitter4j.RawStreamListener;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by kkulagin on 10/23/2015.
@@ -21,12 +23,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
 
   private TwitterStream twitterStream;
-  private Queue<String> tweetsCache = new ArrayBlockingQueue<>(1000);
+  private Queue<String> tweetsCache = new ArrayBlockingQueue<>(100);
   private SpoutOutputCollector collector;
+  private AtomicInteger counter = new AtomicInteger(0);
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new Fields("tweet"));
+    declarer.declare(new Fields("wholeTweet"));
   }
 
 
@@ -45,8 +48,12 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
   @Override
   public void nextTuple() {
     String tweet = tweetsCache.poll();
-    if(tweet != null) {
-      collector.emit(new Values(tweet));
+    if (tweet != null) {
+      collector.emit(new Values(tweet.getBytes(StandardCharsets.UTF_8)));
+      int i = counter.incrementAndGet();
+      if (i % 5 == 0) {
+        log().debug("Consumed " + i + " tweets.");
+      }
     }
   }
 
@@ -60,7 +67,7 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
     RawStreamListener listener = new RawStreamListener() {
       @Override
       public void onMessage(String rawString) {
-        if(!tweetsCache.offer(rawString)){
+        if (!tweetsCache.offer(rawString)) {
           log().warn("Cache is full, skipping");
         }
       }

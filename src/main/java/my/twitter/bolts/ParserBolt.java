@@ -8,7 +8,6 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import my.twitter.beans.Profile;
 import my.twitter.beans.Tweet;
 import org.slf4j.Logger;
@@ -35,12 +34,12 @@ public class ParserBolt extends BaseRichBolt {
 
   @Override
   public void execute(Tuple input) {
-    byte[] binaryInput = input.getBinaryByField("WholeTweet");
+    byte[] binaryInput = input.getBinaryByField("wholeTweet");
     try {
       Tweet tweet = objectMapper.readValue(binaryInput, Tweet.class);
       Profile profile = tweet.getUser();
       collector.emit("profile", input, new Values(objectMapper.writeValueAsString(profile)));
-      collector.emit(input, new Values(objectMapper.writeValueAsString(tweet)));
+      collector.emit("tweet", input, new Values(objectMapper.writeValueAsString(tweet)));
     } catch (Exception e) {
       logger.error("Error parsing tweet", e);
       try {
@@ -58,6 +57,7 @@ public class ParserBolt extends BaseRichBolt {
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
     declarer.declareStream("profile", new Fields("profile"));
+    declarer.declareStream("tweet", new Fields("tweet"));
     declarer.declareStream("err", new Fields("err"));
     declarer.declare(new Fields("tweet"));
   }

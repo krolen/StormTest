@@ -10,8 +10,7 @@ import backtype.storm.topology.TopologyBuilder;
 import my.twitter.bolts.ErrorBolt;
 import my.twitter.bolts.ParserBolt;
 import my.twitter.bolts.ProfileLogBolt;
-import my.twitter.bolts.TwitterLogBolt;
-import my.twitter.spout.SampleTwitterSpout;
+import my.twitter.bolts.TweetLogBolt;
 import my.twitter.spout.TwitterSchema;
 import my.twitter.utils.LogAware;
 import storm.kafka.BrokerHosts;
@@ -44,17 +43,17 @@ public class KafkaTweetsTopology implements LogAware {
 
 
   private IRichBolt createLoggerBolt() {
-    TwitterLogBolt bolt = new TwitterLogBolt();
+    TweetLogBolt bolt = new TweetLogBolt();
     return bolt;
   }
 
 
   private StormTopology createTopology() {
     TopologyBuilder builder = new TopologyBuilder();
-    builder.setSpout("sampleTweetsSpout", new SampleTwitterSpout(), 1);
-    builder.setBolt("parserBolt", new ParserBolt(), 6).setNumTasks(6).shuffleGrouping("sampleTweetsSpout");
+    builder.setSpout("kafkaSpout", createKafkaSpout(), 1);
+    builder.setBolt("parserBolt", new ParserBolt(), 6).setNumTasks(6).shuffleGrouping("kafkaSpout");
     builder.setBolt("profileBolt", new ProfileLogBolt(), 6).setNumTasks(6).shuffleGrouping("parserBolt", "profile");
-    builder.setBolt("tweetsBolt", new TwitterLogBolt(), 6).setNumTasks(6).shuffleGrouping("parserBolt");
+    builder.setBolt("tweetsBolt", new TweetLogBolt(), 6).setNumTasks(6).shuffleGrouping("parserBolt", "tweet");
     builder.setBolt("errorBolt", new ErrorBolt(), 3).setNumTasks(3).shuffleGrouping("parserBolt", "err");
     return builder.createTopology();
   }

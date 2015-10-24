@@ -2,23 +2,17 @@ package my.twitter.bolts;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
-import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import org.apache.storm.guava.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import my.twitter.utils.LogAware;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by kkulagin on 5/13/2015.
  */
-public class TwitterLogBolt extends BaseRichBolt {
-
-  private static final Logger logger = LoggerFactory.getLogger(TwitterLogBolt.class);
+public class TweetLogBolt extends BaseRichBolt implements LogAware {
 
   private OutputCollector collector;
   private long counter;
@@ -32,8 +26,8 @@ public class TwitterLogBolt extends BaseRichBolt {
   public void execute(Tuple input) {
     String string = input.getString(0);
       long l = counter++;
-      if (l % 10000 == 0) {
-        logger.warn(string);
+      if (l % 100 == 0) {
+        log().warn(string);
       }
       collector.ack(input);
   }

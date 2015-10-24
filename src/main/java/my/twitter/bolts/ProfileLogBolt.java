@@ -5,7 +5,6 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import org.apache.storm.guava.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,7 @@ public class ProfileLogBolt extends BaseRichBolt {
   public void execute(Tuple input) {
     String string = input.getString(0);
       long l = counter++;
-      if (l % 10000 == 0) {
+      if (l % 100 == 0) {
         logger.warn(string);
       }
       collector.ack(input);
