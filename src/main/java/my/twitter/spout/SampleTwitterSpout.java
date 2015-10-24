@@ -1,42 +1,80 @@
 package my.twitter.spout;
 
-import twitter4j.*;
-import twitter4j.conf.ConfigurationContext;
+import backtype.storm.spout.SpoutOutputCollector;
+import backtype.storm.task.TopologyContext;
+import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.topology.base.BaseRichSpout;
+import backtype.storm.tuple.Fields;
+import backtype.storm.tuple.Values;
+import my.twitter.utils.LogAware;
+import twitter4j.RawStreamListener;
+import twitter4j.TwitterStream;
+import twitter4j.TwitterStreamFactory;
+
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Created by kkulagin on 10/23/2015.
  */
-public class SampleTwitterSpout {
+public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
+
+  private TwitterStream twitterStream;
+  private Queue<String> tweetsCache = new ArrayBlockingQueue<>(1000);
+  private SpoutOutputCollector collector;
+
+  @Override
+  public void declareOutputFields(OutputFieldsDeclarer declarer) {
+    declarer.declare(new Fields("tweet"));
+  }
 
 
+  @Override
+  public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+    this.collector = collector;
+    setup();
+  }
 
-  protected void setup() {
-    StatusListener listener = new StatusListener(){
-      public void onStatus(Status status) {
-        System.out.println(status.getUser().getName() + " : " + status.getText());
+  @Override
+  public void activate() {
+    super.activate();
+    twitterStream.sample();
+  }
+
+  @Override
+  public void nextTuple() {
+    String tweet = tweetsCache.poll();
+    if(tweet != null) {
+      collector.emit(new Values(tweet));
+    }
+  }
+
+  @Override
+  public void close() {
+    twitterStream.shutdown();
+    super.close();
+  }
+
+  private void setup() {
+    RawStreamListener listener = new RawStreamListener() {
+      @Override
+      public void onMessage(String rawString) {
+        if(!tweetsCache.offer(rawString)){
+          log().warn("Cache is full, skipping");
+        }
       }
 
       @Override
-      public void onScrubGeo(long userId, long upToStatusId) {
-
-      }
-
-      @Override
-      public void onStallWarning(StallWarning warning) {
-
-      }
-
-      public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {}
-      public void onTrackLimitationNotice(int numberOfLimitedStatuses) {}
       public void onException(Exception ex) {
-        ex.printStackTrace();
+        log().error("Error reading sample tweets stream");
+        collector.reportError(ex);
       }
     };
+
     TwitterStreamFactory factory = new TwitterStreamFactory();
-    TwitterStream twitterStream = factory.getInstance();
+    twitterStream = factory.getInstance();
     twitterStream.addListener(listener);
-    // sample() method internally creates a thread which manipulates TwitterStream and calls these adequate listener methods continuously.
-    twitterStream.sample();
   }
 
   public static void main(String[] args) {

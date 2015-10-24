@@ -7,13 +7,13 @@ import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.IRichSpout;
 import backtype.storm.topology.TopologyBuilder;
-import backtype.storm.tuple.Fields;
 import my.twitter.bolts.ErrorBolt;
 import my.twitter.bolts.ParserBolt;
 import my.twitter.bolts.ProfileLogBolt;
 import my.twitter.bolts.TwitterLogBolt;
+import my.twitter.spout.SampleTwitterSpout;
 import my.twitter.spout.TwitterSchema;
-import org.slf4j.LoggerFactory;
+import my.twitter.utils.LogAware;
 import storm.kafka.BrokerHosts;
 import storm.kafka.KafkaSpout;
 import storm.kafka.SpoutConfig;
@@ -22,12 +22,10 @@ import storm.kafka.ZkHosts;
 /**
  * Created by kkulagin on 5/13/2015.
  */
-public class SimpleTopology {
+public class KafkaTweetsTopology implements LogAware {
 
-  private static final org.slf4j.Logger logger = LoggerFactory.getLogger(TwitterLogBolt.class);
-
-  public SimpleTopology() {
-    logger.error("SimpleTopology constructor");
+  public KafkaTweetsTopology() {
+    log().error("SimpleTopology constructor");
     System.out.println("SimpleTopology constructor");
   }
 
@@ -53,8 +51,8 @@ public class SimpleTopology {
 
   private StormTopology createTopology() {
     TopologyBuilder builder = new TopologyBuilder();
-    builder.setSpout("kafkaSpout", createKafkaSpout(), 1);
-    builder.setBolt("parserBolt", new ParserBolt(), 6).setNumTasks(6).shuffleGrouping("kafkaSpout");
+    builder.setSpout("sampleTweetsSpout", new SampleTwitterSpout(), 1);
+    builder.setBolt("parserBolt", new ParserBolt(), 6).setNumTasks(6).shuffleGrouping("sampleTweetsSpout");
     builder.setBolt("profileBolt", new ProfileLogBolt(), 6).setNumTasks(6).shuffleGrouping("parserBolt", "profile");
     builder.setBolt("tweetsBolt", new TwitterLogBolt(), 6).setNumTasks(6).shuffleGrouping("parserBolt");
     builder.setBolt("errorBolt", new ErrorBolt(), 3).setNumTasks(3).shuffleGrouping("parserBolt", "err");
@@ -65,7 +63,7 @@ public class SimpleTopology {
     System.setProperty("storm.jar", "StormTest.jar");
 
 
-    SimpleTopology topology = new SimpleTopology();
+    KafkaTweetsTopology topology = new KafkaTweetsTopology();
     Config conf = new Config();
 //    conf.setDebug(true);
     conf.put(Config.TOPOLOGY_WORKERS, 1);
@@ -77,7 +75,8 @@ public class SimpleTopology {
     try {
       StormSubmitter.submitTopology("myTestTopology", conf, topology.createTopology());
     } catch (Exception e) {
-      logger.error("Error submitting Topology", e);
+      e.printStackTrace();
+      System.err.println("Error submitting Topology" +  e.getMessage());
     }
 
   }
