@@ -76,6 +76,7 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
     RawStreamListener listener = new RawStreamListener() {
       @Override
       public void onMessage(String rawString) {
+//        log().debug("rawJsonTweet: " + rawString);
         if (!tweetsCache.offer(rawString)) {
           log().warn("Cache is full, skipping");
         }

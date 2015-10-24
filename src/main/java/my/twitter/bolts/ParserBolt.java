@@ -37,10 +37,20 @@ public class ParserBolt extends BaseRichBolt implements LogAware {
   public void execute(Tuple input) {
     byte[] binaryInput = input.getBinaryByField("wholeTweet");
     try {
-      Tweet tweet = objectMapper.readValue(binaryInput, Tweet.class);
-      Profile profile = tweet.getUser();
-      collector.emit("profile", input, new Values(objectMapper.writeValueAsString(profile)));
-      collector.emit("tweet", input, new Values(objectMapper.writeValueAsString(tweet)));
+      if(binaryInput[2] == 100) {
+        // delete tweet
+        log().debug("Emitting deleted tweet.");
+        collector.emit("deleteTweet", input, new Values(binaryInput));
+      } else {
+        Tweet tweet = objectMapper.readValue(binaryInput, Tweet.class);
+        Profile profile = tweet.getUser();
+        String profileString = objectMapper.writeValueAsString(profile);
+        log().debug("Emitting profile " + profileString);
+        collector.emit("profile", input, new Values(profileString));
+        String tweetString = objectMapper.writeValueAsString(tweet);
+        log().debug("Emitting tweet " + tweetString);
+        collector.emit("tweet", input, new Values(tweetString));
+      }
     } catch (Exception e) {
       logger.error("Error parsing tweet", e);
       try {
@@ -66,6 +76,7 @@ public class ParserBolt extends BaseRichBolt implements LogAware {
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
     declarer.declareStream("profile", new Fields("profile"));
     declarer.declareStream("tweet", new Fields("tweet"));
+    declarer.declareStream("deleteTweet", new Fields("deleteTweet"));
     declarer.declareStream("err", new Fields("err"));
     declarer.declare(new Fields("tweet"));
   }
