@@ -6,7 +6,6 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import my.twitter.beans.DeleteTweet;
 import my.twitter.utils.LogAware;
 
@@ -20,7 +19,6 @@ public class DeleteTweetLogBolt extends BaseRichBolt implements LogAware {
 
   private OutputCollector collector;
   private long counter;
-  private ObjectReader reader;
   private ObjectMapper objectMapper;
 
   @Override

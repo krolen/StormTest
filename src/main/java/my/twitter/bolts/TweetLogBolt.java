@@ -26,8 +26,8 @@ public class TweetLogBolt extends BaseRichBolt implements LogAware {
   public void execute(Tuple input) {
     String string = input.getString(0);
       long l = counter++;
-      if (l % 50 == 0) {
-        log().warn(string);
+      if (l % 5 == 0) {
+        log().debug(string);
       }
       collector.ack(input);
   }

@@ -90,5 +90,8 @@
     </root>
 
     <logger name="my.twitter" level="DEBUG"/>
+    <logger name="backtype.storm" level="WARN"/>
+    <logger name="org.apache" level="WARN"/>
+
 
 </configuration>

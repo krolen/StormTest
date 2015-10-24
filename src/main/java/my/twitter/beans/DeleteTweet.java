@@ -19,6 +19,14 @@ public class DeleteTweet {
     return timestamp;
   }
 
+  public long getId() {
+    return id;
+  }
+
+  public long getUserId() {
+    return userId;
+  }
+
   @JsonSetter("timestamp_ms")
   public void setTimestamp(long timestamp) {
     this.timestamp = timestamp;
@@ -40,8 +48,7 @@ public class DeleteTweet {
       '}';
   }
 
-  @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE,
-      setterVisibility = JsonAutoDetect.Visibility.NONE)
+  @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
   @JsonIgnoreProperties(ignoreUnknown = true)
   static class Status {
     private long id;

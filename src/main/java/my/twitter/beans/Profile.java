@@ -1,86 +1,91 @@
 package my.twitter.beans;
 
 import com.fasterxml.jackson.annotation.*;
-import my.twitter.utils.Utils;
-
-import java.text.ParseException;
 
 /**
  * Created by kkulagin on 5/15/2015.
  */
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-
 public class Profile {
-  public long id;
-  public String id_str;
-  public String name;
-  public String screenName;
-  public String description;
-  public boolean verified;
+  @JsonProperty("id")
+  private long id;
+  private String name;
+  @JsonProperty("screen_name")
+  private String screenName;
+  private String description;
+  private boolean verified;
+  @JsonProperty("profile_image_url")
   private String pictureUrl;
+  @JsonProperty("lang")
   private String language;
+  @JsonProperty("followers_count")
   private int followersCount;
+  @JsonProperty("friends_count")
   private int friendsCount;
+  @JsonProperty("statuses_count")
   private int postCount;
+  @JsonProperty("created_at")
   private String created;
 
-  @JsonSetter
-  public void setCreated_at(String value) throws ParseException {
-    created = value;
+  public long getId() {
+    return id;
   }
 
-  @JsonGetter
-  public String getCreated() {
-    return created;
+  public String getName() {
+    return name;
   }
 
-  @JsonGetter(value = "postCount")
-  public int getPostCount() {
-    return postCount;
+  public String getScreenName() {
+    return screenName;
   }
 
-  @JsonSetter(value = "statuses_count")
-  public void setPostCount(int postCount) {
-    this.postCount = postCount;
+  public String getDescription() {
+    return description;
   }
 
-  @JsonGetter(value = "friendsCount")
-  public int getFriendsCount() {
-    return friendsCount;
+  public boolean isVerified() {
+    return verified;
   }
 
-  @JsonSetter(value = "friends_count")
-  public void setFriendsCount(int friendsCount) {
-    this.friendsCount = friendsCount;
-  }
-
-  @JsonGetter(value = "followersCount")
-  public int getFollowersCount() {
-    return followersCount;
-  }
-
-  @JsonSetter(value = "followers_count")
-  public void setFollowersCount(int followersCount) {
-    this.followersCount = followersCount;
-  }
-
-  @JsonGetter(value = "pictureUrl")
   public String getPictureUrl() {
     return pictureUrl;
   }
 
-  @JsonSetter(value = "profile_image_url")
-  public void setPictureUrl(String pictureUrl) {
-    this.pictureUrl = pictureUrl;
-  }
-
-  @JsonSetter(value = "language")
   public String getLanguage() {
     return language;
   }
 
-  @JsonSetter(value = "lang")
-  public void setLanguage(String language) {
-    this.language = language;
+  public int getFollowersCount() {
+    return followersCount;
+  }
+
+  public int getFriendsCount() {
+    return friendsCount;
+  }
+
+  public int getPostCount() {
+    return postCount;
+  }
+
+  public String getCreated() {
+    return created;
+  }
+
+  @Override
+  public String toString() {
+    return "Profile{" +
+      "id=" + id +
+      ", name='" + name + '\'' +
+      ", screenName='" + screenName + '\'' +
+      ", description='" + description + '\'' +
+      ", verified=" + verified +
+      ", pictureUrl='" + pictureUrl + '\'' +
+      ", language='" + language + '\'' +
+      ", followersCount=" + followersCount +
+      ", friendsCount=" + friendsCount +
+      ", postCount=" + postCount +
+      ", created='" + created + '\'' +
+      '}';
   }
 }

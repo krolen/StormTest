@@ -5,38 +5,46 @@ import com.fasterxml.jackson.annotation.*;
 /**
  * Created by kkulagin on 5/15/2015.
  */
+
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Tweet {
-  public long id;
+  @JsonProperty("id")
+  private long id;
+  @JsonProperty("text")
   private String contents;
+  @JsonProperty("timestamp_ms")
   private long createDate;
-  public int authorId;
-  public String lang;
+  private long authorId;
+  @JsonProperty("lang")
+  private String lang;
+  @JsonIgnore
   private Profile user;
 
-  @JsonGetter("contents")
+  public long getId() {
+    return id;
+  }
+
   public String getContents() {
     return contents;
   }
 
-  @JsonSetter("text")
-  public void setContents(String contents) {
-    this.contents = contents;
-  }
-
-  @JsonGetter("createDate")
   public long getCreateDate() {
     return createDate;
   }
 
-  @JsonSetter("timestamp_ms")
-  public void setCreateDate(long createDate) {
-    this.createDate = createDate;
+  public long getAuthorId() {
+    return authorId;
+  }
+
+  public String getLang() {
+    return lang;
   }
 
   @JsonSetter
   public void setUser(Profile user) {
     this.user = user;
+    authorId = user.getId();
   }
 
   @JsonIgnore
@@ -47,12 +55,12 @@ public class Tweet {
   @Override
   public String toString() {
     return "Tweet{" +
-        "id=" + id +
-        ", contents='" + contents + '\'' +
-        ", createDate=" + createDate +
-        ", authorId=" + authorId +
-        ", lang='" + lang + '\'' +
-        ", user=" + user +
-        '}';
+      "id=" + id +
+      ", contents='" + contents + '\'' +
+      ", createDate=" + createDate +
+      ", authorId=" + authorId +
+      ", lang='" + lang + '\'' +
+      ", user=" + user +
+      '}';
   }
 }
