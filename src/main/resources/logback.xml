@@ -83,6 +83,8 @@
 
     <root level="info">
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE_DEBUG"/>
+        <appender-ref ref="FILE_WARN"/>
         <appender-ref ref="FILE_INFO"/>
         <appender-ref ref="FILE_ERROR"/>
     </root>

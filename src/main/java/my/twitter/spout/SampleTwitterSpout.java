@@ -6,6 +6,7 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
+import com.google.common.util.concurrent.Uninterruptibles;
 import my.twitter.utils.LogAware;
 import twitter4j.RawStreamListener;
 import twitter4j.TwitterStream;
@@ -15,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -60,6 +62,13 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
   @Override
   public void close() {
     twitterStream.shutdown();
+    log().warn("Closing...");
+    int count = 0;
+    while (tweetsCache.size() > 0 && count++ < 30) {
+      log().warn("Waiting for empty buffer");
+      Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+    }
+    log().warn("Closed");
     super.close();
   }
 

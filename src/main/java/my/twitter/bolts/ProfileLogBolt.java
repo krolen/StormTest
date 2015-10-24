@@ -29,7 +29,7 @@ public class ProfileLogBolt extends BaseRichBolt {
   public void execute(Tuple input) {
     String string = input.getString(0);
       long l = counter++;
-      if (l % 100 == 0) {
+      if (l % 50 == 0) {
         logger.warn(string);
       }
       collector.ack(input);

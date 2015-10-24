@@ -10,6 +10,7 @@ import backtype.storm.tuple.Values;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import my.twitter.beans.Profile;
 import my.twitter.beans.Tweet;
+import my.twitter.utils.LogAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +21,7 @@ import java.util.Map;
 /**
  * Created by kkulagin on 5/15/2015.
  */
-public class ParserBolt extends BaseRichBolt {
+public class ParserBolt extends BaseRichBolt implements LogAware {
 
   private static final Logger logger = LoggerFactory.getLogger(ParserBolt.class);
 
@@ -52,6 +53,13 @@ public class ParserBolt extends BaseRichBolt {
       }
     }
     collector.ack(input);
+  }
+
+  @Override
+  public void cleanup() {
+    log().warn("Closing");
+    super.cleanup();
+    log().warn("Closed");
   }
 
   @Override
