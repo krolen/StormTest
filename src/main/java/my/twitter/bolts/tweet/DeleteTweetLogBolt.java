@@ -1,4 +1,4 @@
-package my.twitter.bolts;
+package my.twitter.bolts.tweet;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -39,6 +39,7 @@ public class DeleteTweetLogBolt extends BaseRichBolt implements LogAware {
       }
       collector.ack(input);
     } catch (IOException e) {
+      // TODO Kostya Kulagin Handle error correctly
       e.printStackTrace();
     }
   }

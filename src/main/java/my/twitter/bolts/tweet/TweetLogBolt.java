@@ -1,11 +1,11 @@
-package my.twitter.bolts;
+package my.twitter.bolts.tweet;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import my.twitter.beans.Profile;
+import my.twitter.beans.Tweet;
 import my.twitter.utils.LogAware;
 
 import java.util.Map;
@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * Created by kkulagin on 5/13/2015.
  */
-public class ProfileLogBolt extends BaseRichBolt implements LogAware {
+public class TweetLogBolt extends BaseRichBolt implements LogAware {
 
   private OutputCollector collector;
   private long counter;
@@ -25,10 +25,10 @@ public class ProfileLogBolt extends BaseRichBolt implements LogAware {
 
   @Override
   public void execute(Tuple input) {
-    Profile profile = (Profile) input.getValue(0);
+    Tweet tweet = (Tweet) input.getValue(0);
       long l = counter++;
       if (l % 5 == 0) {
-        log().debug(profile.toString());
+        log().debug(tweet.toString());
       }
       collector.ack(input);
   }

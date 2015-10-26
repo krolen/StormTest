@@ -12,10 +12,16 @@
         <storm.version>0.9.5</storm.version>
         <t4j.version>[4.0,)</t4j.version>
         <jackson.version>[2.,)</jackson.version>
+        <chronicle.map.version>2.3.9</chronicle.map.version>
     </properties>
 
 
     <dependencies>
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>chronicle-map</artifactId>
+            <version>${chronicle.map.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.twitter4j</groupId>
@@ -38,7 +44,6 @@
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.apache.storm</groupId>
