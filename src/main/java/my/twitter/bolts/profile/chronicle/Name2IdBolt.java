@@ -20,7 +20,6 @@ import java.util.Map;
 public class Name2IdBolt extends BaseRichBolt implements LogAware {
 
   private OutputCollector collector;
-  private long counter;
   private ChronicleMap<String, Long> map;
 
   @Override
@@ -44,6 +43,7 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
   public void execute(Tuple input) {
     Profile profile = (Profile) input.getValue(0);
     map.update(profile.getScreenName(), profile.getId());
+    log().info("Map size is " + map.longSize());
     collector.ack(input);
   }
 

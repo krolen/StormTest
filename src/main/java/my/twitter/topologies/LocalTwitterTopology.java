@@ -10,6 +10,7 @@ import my.twitter.beans.Profile;
 import my.twitter.beans.Tweet;
 import my.twitter.bolts.*;
 import my.twitter.bolts.profile.ProfileLogBolt;
+import my.twitter.bolts.profile.chronicle.Name2IdBolt;
 import my.twitter.bolts.tweet.DeleteTweetLogBolt;
 import my.twitter.bolts.tweet.TweetLogBolt;
 import my.twitter.spout.SampleTwitterSpout;
@@ -50,7 +51,8 @@ public class LocalTwitterTopology {
     builder.setSpout("sampleTweetsSpout", new SampleTwitterSpout(), 1);
     builder.setBolt("parserBolt", new ParserBolt(), 2).setNumTasks(2).shuffleGrouping("sampleTweetsSpout");
     builder.setBolt("deleteTweetLogBolt", new DeleteTweetLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "deleteTweet");
-    builder.setBolt("profileBolt", new ProfileLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "profile");
+    builder.setBolt("name2IdBolt", new Name2IdBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "profile");
+//    builder.setBolt("profileBolt", new ProfileLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "profile");
     builder.setBolt("tweetsBolt", new TweetLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
     builder.setBolt("errorBolt", new ErrorBolt(), 3).setNumTasks(3).shuffleGrouping("parserBolt", "err");
     return builder.createTopology();
@@ -58,7 +60,7 @@ public class LocalTwitterTopology {
 
   private static void configureChronicleMapProperties(Config config) throws IOException {
     final Properties properties = new Properties();
-    try (InputStream stream = LocalTwitterTopology.class.getResourceAsStream("htf.properties")) {
+    try (InputStream stream = LocalTwitterTopology.class.getResourceAsStream("/hft.properties")) {
       properties.load(stream);
     }
     propagateRequiredValue(config, properties, "profile.name.to.id.file");

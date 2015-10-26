@@ -20,12 +20,19 @@ public class Tweet  {
   private long authorId;
   @JsonProperty("lang")
   private String lang;
+  @JsonProperty("source")
+  private String source;
+
 
 
 
 
   @JsonIgnore // skipped in stream
   private Profile user;
+
+  public String getSource() {
+    return source;
+  }
 
   public long getId() {
     return id;
