@@ -5,6 +5,7 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
+import my.twitter.beans.Tweet;
 import my.twitter.utils.LogAware;
 
 import java.util.Map;
@@ -24,10 +25,10 @@ public class TweetLogBolt extends BaseRichBolt implements LogAware {
 
   @Override
   public void execute(Tuple input) {
-    String string = input.getString(0);
+    Tweet tweet = (Tweet) input.getValue(0);
       long l = counter++;
       if (l % 5 == 0) {
-        log().debug(string);
+        log().debug(tweet.toString());
       }
       collector.ack(input);
   }

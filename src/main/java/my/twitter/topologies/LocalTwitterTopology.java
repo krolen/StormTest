@@ -5,6 +5,9 @@ import backtype.storm.LocalCluster;
 import backtype.storm.generated.StormTopology;
 import backtype.storm.topology.TopologyBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
+import my.twitter.beans.DeleteTweet;
+import my.twitter.beans.Profile;
+import my.twitter.beans.Tweet;
 import my.twitter.bolts.*;
 import my.twitter.spout.SampleTwitterSpout;
 
@@ -21,6 +24,9 @@ public class LocalTwitterTopology {
     Config conf = new Config();
     conf.setDebug(true);
     conf.setNumWorkers(2);
+    conf.registerSerialization(Tweet.class);
+    conf.registerSerialization(Profile.class);
+    conf.registerSerialization(DeleteTweet.class);
 
     LocalCluster cluster = new LocalCluster();
     cluster.submitTopology(topologyName, conf, createTopology());

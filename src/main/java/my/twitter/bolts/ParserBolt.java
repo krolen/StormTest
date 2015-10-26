@@ -38,8 +38,9 @@ public class ParserBolt extends BaseRichBolt implements LogAware {
         collector.emit("deleteTweet", input, new Values(binaryInput));
       } else {
         Tweet tweet = objectMapper.readValue(binaryInput, Tweet.class);
-        collector.emit("profile", input, new Values(objectMapper.writeValueAsString(tweet.getUser())));
-        collector.emit("tweet", input, new Values(objectMapper.writeValueAsString(tweet)));
+        collector.emit("profile", input, new Values(tweet.getUser()));
+        tweet.prepareForSerialization();
+        collector.emit("tweet", input, new Values(tweet));
       }
     } catch (Exception e) {
       log().error("Error parsing tweet", e);

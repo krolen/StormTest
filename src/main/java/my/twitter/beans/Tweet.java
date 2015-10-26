@@ -2,13 +2,15 @@ package my.twitter.beans;
 
 import com.fasterxml.jackson.annotation.*;
 
+import java.io.Externalizable;
+
 /**
  * Created by kkulagin on 5/15/2015.
  */
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Tweet {
+public class Tweet  {
   @JsonProperty("id")
   private long id;
   @JsonProperty("text")
@@ -45,6 +47,10 @@ public class Tweet {
   public void setUser(Profile user) {
     this.user = user;
     authorId = user.getId();
+  }
+
+  public void prepareForSerialization() {
+    user = null; //to skip kryo serialization
   }
 
   @JsonIgnore
