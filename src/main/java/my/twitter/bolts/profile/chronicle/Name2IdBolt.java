@@ -5,7 +5,9 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
+import my.twitter.beans.IShortProfile;
 import my.twitter.beans.Profile;
+import my.twitter.beans.ShortProfile;
 import my.twitter.utils.LogAware;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -20,19 +22,36 @@ import java.util.Map;
 public class Name2IdBolt extends BaseRichBolt implements LogAware {
 
   private OutputCollector collector;
-  private ChronicleMap<String, Long> map;
+  private ChronicleMap<String, Long> name2IdMap;
+  private ChronicleMap<Long, IShortProfile> id2ProfileMap;
+  private IShortProfile sampleShortProfile;
 
   @Override
   public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
     this.collector = collector;
     String fileLocation = (String) stormConf.get("profile.name.to.id.file");
     File file = new File(fileLocation);
-    ChronicleMapBuilder<String, Long> builder =
-        ChronicleMapBuilder.of(String.class, Long.class).
-            averageKeySize("this_is_18_charctr".getBytes().length).
-            entries(1000);
+    ChronicleMapBuilder<String, Long> name2IdMapBuilder =
+      ChronicleMapBuilder.of(String.class, Long.class).
+        averageKeySize("this_is_18_charctr".getBytes().length).
+        entries(1000);
     try {
-      map = builder.createPersistedTo(file);
+      name2IdMap = name2IdMapBuilder.createPersistedTo(file);
+    } catch (IOException e) {
+      // fail fast
+      throw new RuntimeException(e);
+    }
+
+    sampleShortProfile = new ShortProfile();
+
+    fileLocation = (String) stormConf.get("profile.id.to.profile.file");
+    file = new File(fileLocation);
+    ChronicleMapBuilder<Long, IShortProfile> builder =
+      ChronicleMapBuilder.of(Long.class, IShortProfile.class).
+        constantValueSizeBySample(sampleShortProfile).
+        entries(1000);
+    try {
+      id2ProfileMap = builder.createPersistedTo(file);
     } catch (IOException e) {
       // fail fast
       throw new RuntimeException(e);
@@ -42,8 +61,13 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
   @Override
   public void execute(Tuple input) {
     Profile profile = (Profile) input.getValue(0);
-    map.update(profile.getScreenName(), profile.getId());
-    log().info("Map size is " + map.longSize());
+    name2IdMap.update(profile.getScreenName(), profile.getId());
+    log().info("name2IdMap size is " + name2IdMap.longSize());
+
+    profile.setAuthority(calculateAuthority(profile));
+    id2ProfileMap.update(profile.getId(), new ShortProfile(profile));
+    log().info("id2ProfileMap size is " + id2ProfileMap.longSize());
+
     collector.ack(input);
   }
 
@@ -54,7 +78,24 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
 
   @Override
   public void cleanup() {
-    map.close();
+    name2IdMap.close();
+    id2ProfileMap.close();
     super.cleanup();
   }
+
+  private static int calculateAuthority(Profile profile) {
+    int numFollowers = profile.getFollowersCount();
+    int numFollowing = profile.getFriendsCount();
+    int numUpdates = profile.getPostCount();
+    int fC = numFollowers + Math.max(0, numFollowers - numFollowing);
+    fC = Math.abs(fC) / 4;
+    numUpdates = Math.abs(numUpdates);
+    double maxUpdatesAuth = Math.min(2.d, (Math.log(1 + numUpdates) / Math.log(100)));
+    double maxFollowerAuth = Math.log(1 + fC) / Math.log(3.4);
+    maxFollowerAuth = Math.max(0.d, maxFollowerAuth - 0.5d);
+    int auth = (int) (maxFollowerAuth + maxUpdatesAuth);
+    return Math.min(auth, 10);
+  }
+
+
 }
