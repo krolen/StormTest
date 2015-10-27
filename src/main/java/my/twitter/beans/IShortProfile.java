@@ -5,9 +5,9 @@ package my.twitter.beans;
  * @since 26.10.2015
  */
 public interface IShortProfile {
-  int getAuthority();
+  byte getAuthority();
 
-  byte isVerified();
+  boolean isVerified();
 
   int getFollowersCount();
 
@@ -15,4 +15,13 @@ public interface IShortProfile {
 
   int getPostCount();
 
+  void setVerified(boolean verified);
+
+  void setAuthority(byte authority);
+
+  void setFollowersCount(int followersCount);
+
+  void setFriendsCount(int friendsCount);
+
+  void setPostCount(int postCount);
 }

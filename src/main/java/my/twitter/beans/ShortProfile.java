@@ -4,14 +4,14 @@ package my.twitter.beans;
  * Created by kkulagin on 5/15/2015.
  */
 public class ShortProfile implements IShortProfile {
-  private byte verified;
+  private boolean verified;
   private byte authority;
   private int followersCount;
   private int friendsCount;
   private int postCount;
 
   public ShortProfile(Profile profile) {
-    verified = (byte) (profile.isVerified() ? 1 : 0);
+    verified = profile.isVerified();
     authority = (byte) profile.getAuthority();
     followersCount = profile.getFollowersCount();
     friendsCount = profile.getFriendsCount();
@@ -22,12 +22,12 @@ public class ShortProfile implements IShortProfile {
   }
 
   @Override
-  public int getAuthority() {
+  public byte getAuthority() {
     return authority;
   }
 
   @Override
-  public byte isVerified() {
+  public boolean isVerified() {
     return verified;
   }
 
@@ -46,22 +46,27 @@ public class ShortProfile implements IShortProfile {
     return postCount;
   }
 
-  public void setVerified(byte verified) {
+  @Override
+  public void setVerified(boolean verified) {
     this.verified = verified;
   }
 
+  @Override
   public void setAuthority(byte authority) {
     this.authority = authority;
   }
 
+  @Override
   public void setFollowersCount(int followersCount) {
     this.followersCount = followersCount;
   }
 
+  @Override
   public void setFriendsCount(int friendsCount) {
     this.friendsCount = friendsCount;
   }
 
+  @Override
   public void setPostCount(int postCount) {
     this.postCount = postCount;
   }
