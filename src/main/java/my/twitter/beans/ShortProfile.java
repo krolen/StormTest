@@ -9,6 +9,7 @@ public class ShortProfile implements IShortProfile {
   private int followersCount;
   private int friendsCount;
   private int postCount;
+  private long modifiedTime;
 
   public ShortProfile(Profile profile) {
     verified = profile.isVerified();
@@ -47,6 +48,11 @@ public class ShortProfile implements IShortProfile {
   }
 
   @Override
+  public long getModifiedTime() {
+    return modifiedTime;
+  }
+
+  @Override
   public void setVerified(boolean verified) {
     this.verified = verified;
   }
@@ -72,13 +78,19 @@ public class ShortProfile implements IShortProfile {
   }
 
   @Override
+  public void setModifiedTime(long time) {
+    this.modifiedTime = time;
+  }
+
+  @Override
   public String toString() {
-    return "SaveProfile{" +
-      "verified=" + verified +
-      ", authority=" + authority +
-      ", followersCount=" + followersCount +
-      ", friendsCount=" + friendsCount +
-      ", postCount=" + postCount +
-      '}';
+    return "ShortProfile{" +
+        "verified=" + verified +
+        ", authority=" + authority +
+        ", followersCount=" + followersCount +
+        ", friendsCount=" + friendsCount +
+        ", postCount=" + postCount +
+        ", modifiedTime=" + modifiedTime +
+        '}';
   }
 }

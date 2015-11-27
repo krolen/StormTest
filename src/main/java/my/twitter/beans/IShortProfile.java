@@ -15,6 +15,8 @@ public interface IShortProfile {
 
   int getPostCount();
 
+  long getModifiedTime();
+
   void setVerified(boolean verified);
 
   void setAuthority(byte authority);
@@ -24,4 +26,7 @@ public interface IShortProfile {
   void setFriendsCount(int friendsCount);
 
   void setPostCount(int postCount);
+
+  void setModifiedTime(long time);
+
 }

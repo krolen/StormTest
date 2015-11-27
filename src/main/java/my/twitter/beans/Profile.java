@@ -35,6 +35,12 @@ public class Profile {
   @JsonProperty("location")
   private String location;
 
+  private long modifiedTime = System.currentTimeMillis();
+
+  public long getModifiedTime() {
+    return modifiedTime;
+  }
+
   public void setAuthority(int authority) {
     this.authority = authority;
   }

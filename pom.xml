@@ -12,9 +12,29 @@
         <storm.version>0.9.5</storm.version>
         <t4j.version>[4.0,)</t4j.version>
         <jackson.version>[2.,)</jackson.version>
-        <chronicle.map.version>2.3.9</chronicle.map.version>
+        <!--<chronicle.map.version>3.1.5-alpha</chronicle.map.version>-->
+        <!--<chronicle.map.version>2.3.9</chronicle.map.version>-->
+        <chronicle.map.version>3.2.1-beta-SNAPSHOT</chronicle.map.version>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>third-party-bom</artifactId>
+                <type>pom</type>
+                <version>3.4.24</version>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>chronicle-bom</artifactId>
+                <type>pom</type>
+                <version>1.10.13</version>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -124,5 +144,29 @@
             </plugin>
         </plugins>
     </build>
+
+    <repositories>
+        <!--<repository>-->
+            <!--<id>mvnrepo</id>-->
+            <!--<name>mvnrepo</name>-->
+            <!--<url>http://central.maven.org/maven2</url>-->
+        <!--</repository>-->
+        <!--<repository>-->
+            <!--<id>mvnrepo2</id>-->
+            <!--<name>mvnrepo2</name>-->
+            <!--<url>http://mvnrepository.com/artifact/</url>-->
+        <!--</repository>-->
+        <repository>
+            <id>Snapshot Repository</id>
+            <name>Snapshot Repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+    </repositories>
 
 </project>

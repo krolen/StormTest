@@ -10,8 +10,8 @@ import my.twitter.beans.IShortProfile;
 import my.twitter.beans.Profile;
 import my.twitter.beans.ShortProfile;
 import my.twitter.utils.LogAware;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.values.Values;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +25,6 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
   private OutputCollector collector;
   private ChronicleMap<String, Long> name2IdMap;
   private ChronicleMap<Long, IShortProfile> id2ProfileMap;
-  private IShortProfile sampleShortProfile;
 
   @Override
   public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -34,7 +33,7 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
     File file = new File(fileLocation);
     ChronicleMapBuilder<String, Long> name2IdMapBuilder =
       ChronicleMapBuilder.of(String.class, Long.class).
-        averageKeySize("this_is_18_charctr".getBytes().length).
+        averageKey("this_is_18_charctr").
         entries(1000);
     try {
       name2IdMap = name2IdMapBuilder.createPersistedTo(file);
@@ -43,13 +42,11 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
       throw new RuntimeException(e);
     }
 
-    sampleShortProfile = new ShortProfile();
-
     fileLocation = (String) stormConf.get("profile.id.to.profile.file");
     file = new File(fileLocation);
     ChronicleMapBuilder<Long, IShortProfile> builder =
       ChronicleMapBuilder.of(Long.class, IShortProfile.class).
-        constantValueSizeBySample(sampleShortProfile).
+        constantValueSizeBySample(new ShortProfile()).
         entries(1000);
     try {
       id2ProfileMap = builder.createPersistedTo(file);
@@ -62,18 +59,19 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
   @Override
   public void execute(Tuple input) {
     Profile profile = (Profile) input.getValue(0);
-    name2IdMap.update(profile.getScreenName(), profile.getId());
-    log().info("name2IdMap size is " + name2IdMap.longSize());
+    name2IdMap.put(profile.getScreenName(), profile.getId());
 
     profile.setAuthority(calculateAuthority(profile));
-    IShortProfile using = id2ProfileMap.newValueInstance();
+
+    IShortProfile using = Values.newHeapInstance(IShortProfile.class);
     using.setAuthority((byte)profile.getAuthority());
     using.setFollowersCount(profile.getFollowersCount());
     using.setFriendsCount(profile.getFriendsCount());
     using.setPostCount(profile.getPostCount());
     using.setVerified(profile.isVerified());
+    using.setModifiedTime(profile.getModifiedTime());
 
-    id2ProfileMap.update(profile.getId(), using);
+    id2ProfileMap.put(profile.getId(), using);
     log().info("id2ProfileMap size is " + id2ProfileMap.longSize());
 
     collector.ack(input);
@@ -106,13 +104,13 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
   }
 
   private void testSaveProfile(Profile profile) {
-    IShortProfile using = id2ProfileMap.newValueInstance();
+    IShortProfile using = Values.newHeapInstance(IShortProfile.class);
     using.setAuthority((byte)profile.getAuthority());
     using.setFollowersCount(profile.getFollowersCount());
     using.setFriendsCount(profile.getFriendsCount());
     using.setPostCount(profile.getPostCount());
     using.setVerified(profile.isVerified());
-    id2ProfileMap.update(profile.getId() + System.currentTimeMillis(), using);
+    id2ProfileMap.put(profile.getId() + System.currentTimeMillis(), using);
   }
 
   public static void main(String[] args) {
