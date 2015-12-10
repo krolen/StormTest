@@ -9,32 +9,32 @@
     <version>1.0-SNAPSHOT</version>
     <properties>
         <java.version>1.8</java.version>
-        <storm.version>0.9.5</storm.version>
+        <storm.version>0.9.6</storm.version>
         <t4j.version>[4.0,)</t4j.version>
-        <jackson.version>[2.,)</jackson.version>
+        <jackson.version>2.6.3</jackson.version>
         <!--<chronicle.map.version>3.1.5-alpha</chronicle.map.version>-->
         <!--<chronicle.map.version>2.3.9</chronicle.map.version>-->
-        <chronicle.map.version>3.2.1-beta-SNAPSHOT</chronicle.map.version>
+        <chronicle.map.version>3.3.1-beta-SNAPSHOT</chronicle.map.version>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>third-party-bom</artifactId>
-                <type>pom</type>
-                <version>3.4.24</version>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-bom</artifactId>
-                <type>pom</type>
-                <version>1.10.13</version>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+    <!--<dependencyManagement>-->
+        <!--<dependencies>-->
+            <!--<dependency>-->
+                <!--<groupId>net.openhft</groupId>-->
+                <!--<artifactId>third-party-bom</artifactId>-->
+                <!--<type>pom</type>-->
+                <!--<version>3.4.24</version>-->
+                <!--<scope>import</scope>-->
+            <!--</dependency>-->
+            <!--<dependency>-->
+                <!--<groupId>net.openhft</groupId>-->
+                <!--<artifactId>chronicle-bom</artifactId>-->
+                <!--<type>pom</type>-->
+                <!--<version>1.10.18</version>-->
+                <!--<scope>import</scope>-->
+            <!--</dependency>-->
+        <!--</dependencies>-->
+    <!--</dependencyManagement>-->
 
     <dependencies>
         <dependency>
@@ -163,9 +163,6 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
         </repository>
     </repositories>
 
