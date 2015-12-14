@@ -8,7 +8,6 @@ import backtype.storm.tuple.Tuple;
 import com.google.common.collect.Maps;
 import my.twitter.beans.IShortProfile;
 import my.twitter.beans.Profile;
-import my.twitter.beans.ShortProfile;
 import my.twitter.utils.LogAware;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.values.Values;
@@ -20,7 +19,7 @@ import java.util.*;
 /**
  * Created by kkulagin on 10/26/2015.
  */
-public class Name2IdBolt extends BaseRichBolt implements LogAware {
+public class AmendProfileBolt extends BaseRichBolt implements LogAware {
 
   private OutputCollector collector;
   private ChronicleMap<String, Long> name2IdMap;
@@ -42,18 +41,18 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
       throw new RuntimeException(e);
     }
 
-    fileLocation = (String) stormConf.get("profile.id.to.profile.file");
-    file = new File(fileLocation);
-    ChronicleMapBuilder<Long, IShortProfile> builder =
-      ChronicleMapBuilder.of(Long.class, IShortProfile.class).
-        constantValueSizeBySample(new ShortProfile()).
-        entries(1000);
-    try {
-      id2ProfileMap = builder.createPersistedTo(file);
-    } catch (IOException e) {
-      // fail fast
-      throw new RuntimeException(e);
-    }
+//    fileLocation = (String) stormConf.get("profile.id.to.profile.file");
+//    file = new File(fileLocation);
+//    ChronicleMapBuilder<Long, IShortProfile> builder =
+//      ChronicleMapBuilder.of(Long.class, IShortProfile.class).
+//        constantValueSizeBySample(new ShortProfile()).
+//        entries(1000);
+//    try {
+//      id2ProfileMap = builder.createPersistedTo(file);
+//    } catch (IOException e) {
+//      // fail fast
+//      throw new RuntimeException(e);
+//    }
   }
 
   @Override
@@ -63,16 +62,16 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
 
     profile.setAuthority(calculateAuthority(profile));
 
-    IShortProfile using = Values.newHeapInstance(IShortProfile.class);
-    using.setAuthority((byte)profile.getAuthority());
-    using.setFollowersCount(profile.getFollowersCount());
-    using.setFriendsCount(profile.getFriendsCount());
-    using.setPostCount(profile.getPostCount());
-    using.setVerified(profile.isVerified());
-    using.setModifiedTime(profile.getModifiedTime());
-
-    id2ProfileMap.put(profile.getId(), using);
-    log().info("id2ProfileMap size is " + id2ProfileMap.longSize());
+//    IShortProfile using = Values.newHeapInstance(IShortProfile.class);
+//    using.setAuthority((byte)profile.getAuthority());
+//    using.setFollowersCount(profile.getFollowersCount());
+//    using.setFriendsCount(profile.getFriendsCount());
+//    using.setPostCount(profile.getPostCount());
+//    using.setVerified(profile.isVerified());
+//    using.setModifiedTime(profile.getModifiedTime());
+//
+//    id2ProfileMap.put(profile.getId(), using);
+//    log().info("id2ProfileMap size is " + id2ProfileMap.longSize());
 
     collector.ack(input);
   }
@@ -85,17 +84,16 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
   @Override
   public void cleanup() {
     name2IdMap.close();
-    id2ProfileMap.close();
+//    id2ProfileMap.close();
     super.cleanup();
   }
 
   private static int calculateAuthority(Profile profile) {
     int numFollowers = profile.getFollowersCount();
     int numFollowing = profile.getFriendsCount();
-    int numUpdates = profile.getPostCount();
+    int numUpdates = Math.abs(profile.getPostCount());
     int fC = numFollowers + Math.max(0, numFollowers - numFollowing);
     fC = Math.abs(fC) / 4;
-    numUpdates = Math.abs(numUpdates);
     double maxUpdatesAuth = Math.min(2.d, (Math.log(1 + numUpdates) / Math.log(100)));
     double maxFollowerAuth = Math.log(1 + fC) / Math.log(3.4);
     maxFollowerAuth = Math.max(0.d, maxFollowerAuth - 0.5d);
@@ -117,21 +115,21 @@ public class Name2IdBolt extends BaseRichBolt implements LogAware {
     HashMap<Object, Object> map = Maps.newHashMap();
     map.put("profile.name.to.id.file", "c:/data/profile/name2id");
     map.put("profile.id.to.profile.file", "c:/data/profile/id2profile");
-    Name2IdBolt name2IdBolt = new Name2IdBolt();
-    name2IdBolt.prepare(map, null, null);
+    AmendProfileBolt amendProfileBolt = new AmendProfileBolt();
+    amendProfileBolt.prepare(map, null, null);
 
     Profile profile = new Profile();
     profile.setAuthority(12);
-    name2IdBolt.testSaveProfile(profile);
+    amendProfileBolt.testSaveProfile(profile);
 
-    name2IdBolt.cleanup();
+    amendProfileBolt.cleanup();
 
-    name2IdBolt.prepare(map, null, null);
-    System.out.println(name2IdBolt.id2ProfileMap.longSize());
-    Set<Map.Entry<Long, IShortProfile>> entries = name2IdBolt.id2ProfileMap.entrySet();
-    for (Map.Entry<Long, IShortProfile> entry : entries) {
-      System.out.println("entry = " + entry.getKey() + " : " + entry.getValue());
-    }
-    name2IdBolt.cleanup();
+    amendProfileBolt.prepare(map, null, null);
+//    System.out.println(amendProfileBolt.id2ProfileMap.longSize());
+//    Set<Map.Entry<Long, IShortProfile>> entries = amendProfileBolt.id2ProfileMap.entrySet();
+//    for (Map.Entry<Long, IShortProfile> entry : entries) {
+//      System.out.println("entry = " + entry.getKey() + " : " + entry.getValue());
+//    }
+    amendProfileBolt.cleanup();
   }
 }

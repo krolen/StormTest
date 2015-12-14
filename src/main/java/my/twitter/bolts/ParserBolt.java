@@ -69,6 +69,6 @@ public class ParserBolt extends BaseRichBolt implements LogAware {
     declarer.declareStream("tweet", new Fields("tweet"));
     declarer.declareStream("deleteTweet", new Fields("deleteTweet"));
     declarer.declareStream("err", new Fields("err"));
-    declarer.declare(new Fields("tweet"));
+//    declarer.declare(new Fields("tweet"));
   }
 }
