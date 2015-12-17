@@ -27,7 +27,7 @@ public abstract class TwitterTopology implements LogAware {
 
   protected void configureChronicleMapProperties(Config config) {
     final Properties properties = new Properties();
-    try (InputStream stream = LocalTwitterTopology.class.getResourceAsStream("/hft.properties")) {
+    try (InputStream stream = SampleTwitterTopology.class.getResourceAsStream("/hft.properties")) {
       properties.load(stream);
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -51,7 +51,6 @@ public abstract class TwitterTopology implements LogAware {
     conf.registerSerialization(Profile.class);
     conf.registerSerialization(DeleteTweet.class);
 
-    conf.put(Config.NIMBUS_HOST, "52.8.44.60");
     conf.put(Config.NIMBUS_THRIFT_PORT, 6627);
     conf.put(Config.TOPOLOGY_ACKER_EXECUTORS, 6);
 

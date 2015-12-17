@@ -5,8 +5,8 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
+import com.google.common.base.Strings;
 import my.twitter.utils.LogAware;
-import org.apache.storm.guava.base.Strings;
 
 import java.util.Map;
 
