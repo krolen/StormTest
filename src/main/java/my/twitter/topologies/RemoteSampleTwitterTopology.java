@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class RemoteSampleTwitterTopology extends SampleTwitterTopology {
 
   public static void main(String[] args) throws IOException {
-    System.setProperty("storm.jar", "StormTest.jar");
+    System.setProperty("storm.jar", "RemoteStorm.jar");
 
     RemoteSampleTwitterTopology thisTopology = new RemoteSampleTwitterTopology();
     try {

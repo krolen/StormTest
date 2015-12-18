@@ -4,16 +4,19 @@ import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import com.google.common.collect.Maps;
 import my.twitter.beans.IShortProfile;
 import my.twitter.beans.Profile;
+import my.twitter.beans.ShortProfile;
 import my.twitter.utils.LogAware;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.values.Values;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
 
 /**
@@ -30,10 +33,19 @@ public class AmendProfileBolt extends BaseRichBolt implements LogAware {
     this.collector = collector;
     String fileLocation = (String) stormConf.get("profile.name.to.id.file");
     File file = new File(fileLocation);
+    if (!file.exists()) {
+      try {
+        file.getParentFile().mkdirs();
+        file.createNewFile();
+      } catch (IOException e) {
+        // fail fast
+        throw new RuntimeException(e);
+      }
+    }
     ChronicleMapBuilder<String, Long> name2IdMapBuilder =
-      ChronicleMapBuilder.of(String.class, Long.class).
-        averageKey("this_is_18_charctr").
-        entries(1000);
+        ChronicleMapBuilder.of(String.class, Long.class).
+            averageKey("this_is_18_charctr").
+            entries(System.getProperty("os.name").toLowerCase().contains("win")? 1000 : 400_000_000);
     try {
       name2IdMap = name2IdMapBuilder.createPersistedTo(file);
     } catch (IOException e) {
@@ -46,7 +58,7 @@ public class AmendProfileBolt extends BaseRichBolt implements LogAware {
 //    ChronicleMapBuilder<Long, IShortProfile> builder =
 //      ChronicleMapBuilder.of(Long.class, IShortProfile.class).
 //        constantValueSizeBySample(new ShortProfile()).
-//        entries(1000);
+//        entries(400_000_000);
 //    try {
 //      id2ProfileMap = builder.createPersistedTo(file);
 //    } catch (IOException e) {
@@ -61,6 +73,7 @@ public class AmendProfileBolt extends BaseRichBolt implements LogAware {
     name2IdMap.put(profile.getScreenName(), profile.getId());
 
     profile.setAuthority(calculateAuthority(profile));
+    collector.emit("storeProfile", input, new backtype.storm.tuple.Values(profile));
 
 //    IShortProfile using = Values.newHeapInstance(IShortProfile.class);
 //    using.setAuthority((byte)profile.getAuthority());
@@ -78,7 +91,7 @@ public class AmendProfileBolt extends BaseRichBolt implements LogAware {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-
+    declarer.declareStream("storeProfile", new Fields("profile"));
   }
 
   @Override
@@ -103,7 +116,7 @@ public class AmendProfileBolt extends BaseRichBolt implements LogAware {
 
   private void testSaveProfile(Profile profile) {
     IShortProfile using = Values.newHeapInstance(IShortProfile.class);
-    using.setAuthority((byte)profile.getAuthority());
+    using.setAuthority((byte) profile.getAuthority());
     using.setFollowersCount(profile.getFollowersCount());
     using.setFriendsCount(profile.getFriendsCount());
     using.setPostCount(profile.getPostCount());

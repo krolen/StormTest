@@ -66,7 +66,7 @@ public abstract class TwitterTopology implements LogAware {
     builder.setBolt("deleteTweetLogBolt", new DeleteTweetLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "deleteTweet");
 
     builder.setBolt("amendProfileBolt", new AmendProfileBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "profile");
-    builder.setBolt("storeProfileBolt", new StoreProfileBolt(), 2).setNumTasks(2).shuffleGrouping("amendProfileBolt", "storeProfile");
+    builder.setBolt("storeProfileBolt", new StoreProfileBolt(), 1).setNumTasks(1).shuffleGrouping("amendProfileBolt", "storeProfile");
 
 //    builder.setBolt("profileBolt", new ProfileLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "profile");
     builder.setBolt("tweetsBolt", new TweetLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
