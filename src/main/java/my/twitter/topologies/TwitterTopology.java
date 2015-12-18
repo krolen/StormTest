@@ -61,16 +61,16 @@ public abstract class TwitterTopology implements LogAware {
   protected StormTopology topology() {
     TopologyBuilder builder = new TopologyBuilder();
     builder.setSpout("rootSpout", createRootSpout(), 1);
-    builder.setBolt("parserBolt", new ParserBolt(), 2).setNumTasks(2).shuffleGrouping("rootSpout");
+    builder.setBolt("parserBolt", new ParserBolt(), 3).setNumTasks(2).shuffleGrouping("rootSpout");
 
-    builder.setBolt("deleteTweetLogBolt", new DeleteTweetLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "deleteTweet");
+    builder.setBolt("deleteTweetLogBolt", new DeleteTweetLogBolt(), 1).setNumTasks(1).shuffleGrouping("parserBolt", "deleteTweet");
 
-    builder.setBolt("amendProfileBolt", new AmendProfileBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "profile");
-    builder.setBolt("storeProfileBolt", new StoreProfileBolt(), 1).setNumTasks(1).shuffleGrouping("amendProfileBolt", "storeProfile");
+    builder.setBolt("amendProfileBolt", new AmendProfileBolt(), 3).setNumTasks(2).shuffleGrouping("parserBolt", "profile");
+    builder.setBolt("storeProfileBolt", new StoreProfileBolt(), 2).setNumTasks(2).shuffleGrouping("amendProfileBolt", "storeProfile");
 
 //    builder.setBolt("profileBolt", new ProfileLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "profile");
     builder.setBolt("tweetsBolt", new TweetLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
-    builder.setBolt("errorBolt", new ErrorBolt(), 3).setNumTasks(3).shuffleGrouping("parserBolt", "err");
+    builder.setBolt("errorBolt", new ErrorBolt(), 1).setNumTasks(1).shuffleGrouping("parserBolt", "err");
     return builder.createTopology();
   }
 }

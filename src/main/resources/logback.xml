@@ -6,7 +6,7 @@
     </appender>
 
     <appender name="FILE_DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/debug/debug.log</file>
+        <file>/logs/debug/debug.log</file>
         <encoder>
             <pattern>%-5p [%d] [%t][%X{requestUri} %X{taskId}] %c: %m%n%rEx</pattern>
         </encoder>
@@ -25,7 +25,7 @@
     </appender>
 
     <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/info/info.log</file>
+        <file>/logs/info/info.log</file>
         <encoder>
             <pattern>%-5p [%d] [%t][%X{requestUri} %X{taskId}] %c: %m%n%rEx</pattern>
         </encoder>
@@ -44,7 +44,7 @@
     </appender>
 
     <appender name="FILE_WARN" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/warn/warn.log</file>
+        <file>/logs/warn/warn.log</file>
         <encoder>
             <pattern>%-5p [%d] [%t][%X{requestUri} %X{taskId}] %c: %m%n%rEx</pattern>
         </encoder>
@@ -63,7 +63,7 @@
     </appender>
 
     <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/error/error.log</file>
+        <file>/logs/error/error.log</file>
         <encoder>
             <pattern>%-5p [%d] [%t][%X{requestUri} %X{taskId}] %c: %m%n%rEx</pattern>
         </encoder>

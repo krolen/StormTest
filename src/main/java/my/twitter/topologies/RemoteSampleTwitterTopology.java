@@ -18,7 +18,7 @@ public class RemoteSampleTwitterTopology extends SampleTwitterTopology {
 
     RemoteSampleTwitterTopology thisTopology = new RemoteSampleTwitterTopology();
     try {
-      StormSubmitter.submitTopology("myTestTopology", thisTopology.config(), thisTopology.topology());
+      StormSubmitter.submitTopology("fromSample", thisTopology.config(), thisTopology.topology());
     } catch (Exception e) {
       e.printStackTrace();
       System.err.println("Error submitting Topology" +  e.getMessage());

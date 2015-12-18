@@ -8,6 +8,7 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import com.google.common.util.concurrent.Uninterruptibles;
 import my.twitter.utils.LogAware;
+import org.apache.commons.lang.RandomStringUtils;
 import twitter4j.RawStreamListener;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
@@ -18,6 +19,7 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by kkulagin on 10/23/2015.
@@ -28,6 +30,7 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
   private Queue<String> tweetsCache = new ArrayBlockingQueue<>(100);
   private SpoutOutputCollector collector;
   private AtomicInteger counter = new AtomicInteger(0);
+  private AtomicLong ids = new AtomicLong(1);
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
@@ -51,12 +54,17 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
   public void nextTuple() {
     String tweet = tweetsCache.poll();
     if (tweet != null) {
-      collector.emit(new Values(tweet.getBytes(StandardCharsets.UTF_8)));
+      collector.emit(new Values(tweet.getBytes(StandardCharsets.UTF_8)), ids.getAndIncrement());
       int i = counter.incrementAndGet();
       if (i % 5 == 0) {
         log().debug("Consumed " + i + " tweets.");
       }
     }
+  }
+
+  @Override
+  public void ack(Object msgId) {
+    super.ack(msgId);
   }
 
   @Override
