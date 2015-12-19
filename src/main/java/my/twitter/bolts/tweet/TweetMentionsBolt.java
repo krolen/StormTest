@@ -36,8 +36,8 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
     missedMentionsMetric = new CountMetric();
     extractedMentionsMetric = new CountMetric();
 
-    context.registerMetric("missed_mentions", missedMentionsMetric, 60);
-    context.registerMetric("extracted_mentions", extractedMentionsMetric, 60);
+    context.registerMetric("missed_mentions", missedMentionsMetric, 10);
+    context.registerMetric("extracted_mentions", extractedMentionsMetric, 10);
   }
 
   @Override
@@ -47,19 +47,25 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
     List<Long> mentions = new ArrayList<>();
     String contents = tweet.getContents();
     Matcher matcher = SCREEN_NAME_PATTERN.matcher(contents);
+    int mentionsCount = 0;
     while (matcher.find()) {
+      mentionsCount++;
       String mention = contents.substring(matcher.start() + 1, matcher.end());
       Long id = name2IdMap.get(mention);
       if (id == null) {
-        log().warn("Cannot resolve name " + mention);
         missedMentionsMetric.incr();
       } else {
         mentions.add(id);
       }
     }
-    extractedMentionsMetric.incrBy(mentions.size());
-
-    tweet.setMentions(Longs.toArray(mentions));
+    if(mentionsCount > 0) {
+      int size = mentions.size();
+      log().warn("Resolved " + size + " of " + mentionsCount + " mentions.");
+      if(size > 0) {
+        extractedMentionsMetric.incrBy(size);
+        tweet.setMentions(Longs.toArray(mentions));
+      }
+    }
     long l = counter++;
     if (l % 50 == 0) {
       log().debug(tweet.toString());
