@@ -1,6 +1,7 @@
 package my.twitter.bolts.tweet;
 
 import backtype.storm.metric.api.CountMetric;
+import backtype.storm.metric.api.MultiCountMetric;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -24,8 +25,7 @@ import java.util.regex.Pattern;
 public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
   private static final Pattern SCREEN_NAME_PATTERN = Pattern.compile("[@＠][a-zA-Z0-9_]+");
 
-  private transient CountMetric missedMentionsMetric;
-  private transient CountMetric extractedMentionsMetric;
+  private transient MultiCountMetric mentionsMetric;
   private transient long counter;
   private transient ChronicleMap<String, Long> name2IdMap;
 
@@ -33,11 +33,9 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
   public void prepare(Map stormConf, TopologyContext context) {
     super.prepare(stormConf, context);
     name2IdMap = ChronicleDataService.getInstance(stormConf).getName2IdMap();
-    missedMentionsMetric = new CountMetric();
-    extractedMentionsMetric = new CountMetric();
+    mentionsMetric = new MultiCountMetric();
 
-    context.registerMetric("missed_mentions", missedMentionsMetric, 10);
-    context.registerMetric("extracted_mentions", extractedMentionsMetric, 10);
+    context.registerMetric("mentions", mentionsMetric, 60);
   }
 
   @Override
@@ -53,7 +51,7 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
       String mention = contents.substring(matcher.start() + 1, matcher.end());
       Long id = name2IdMap.get(mention);
       if (id == null) {
-        missedMentionsMetric.incr();
+        mentionsMetric.scope("missed_mentions").incr();
       } else {
         mentions.add(id);
       }
@@ -62,7 +60,7 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
       int size = mentions.size();
       log().warn("Resolved " + size + " of " + mentionsCount + " mentions.");
       if(size > 0) {
-        extractedMentionsMetric.incrBy(size);
+        mentionsMetric.scope("extracted_mentions").incrBy(size);
         tweet.setMentions(Longs.toArray(mentions));
       }
     }
