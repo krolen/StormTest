@@ -8,7 +8,6 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import com.google.common.util.concurrent.Uninterruptibles;
 import my.twitter.utils.LogAware;
-import org.apache.commons.lang.RandomStringUtils;
 import twitter4j.RawStreamListener;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;

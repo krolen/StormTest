@@ -1,6 +1,5 @@
-package my.twitter.bolts.profile.chronicle;
+package my.twitter.bolts.profile;
 
-import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -10,13 +9,11 @@ import backtype.storm.tuple.Tuple;
 import com.google.common.collect.Maps;
 import my.twitter.beans.IShortProfile;
 import my.twitter.beans.Profile;
+import my.twitter.bolts.profile.chronicle.ChronicleDataService;
 import my.twitter.utils.LogAware;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,33 +22,12 @@ import java.util.Map;
  */
 public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
 
-  private ChronicleMap<String, Long> name2IdMap;
-  private ChronicleMap<Long, IShortProfile> id2ProfileMap;
+  private transient ChronicleMap<String, Long> name2IdMap;
+  private transient ChronicleMap<Long, IShortProfile> id2ProfileMap;
 
   @Override
   public void prepare(Map stormConf, TopologyContext context) {
-    String fileLocation = (String) stormConf.get("profile.name.to.id.file");
-    File file = new File(fileLocation);
-    if (!file.exists()) {
-      try {
-        file.getParentFile().mkdirs();
-        file.createNewFile();
-      } catch (IOException e) {
-        // fail fast
-        throw new RuntimeException(e);
-      }
-    }
-    ChronicleMapBuilder<String, Long> name2IdMapBuilder =
-        ChronicleMapBuilder.of(String.class, Long.class).
-            averageKey("this_is_18_charctr").
-            entries(System.getProperty("os.name").toLowerCase().contains("win")? 1000 : 400_000_000);
-    try {
-      name2IdMap = name2IdMapBuilder.createPersistedTo(file);
-    } catch (IOException e) {
-      // fail fast
-      throw new RuntimeException(e);
-    }
-
+    name2IdMap = ChronicleDataService.getInstance(stormConf).getName2IdMap();
 //    fileLocation = (String) stormConf.get("profile.id.to.profile.file");
 //    file = new File(fileLocation);
 //    ChronicleMapBuilder<Long, IShortProfile> builder =
@@ -70,7 +46,6 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
   public void execute(Tuple input, BasicOutputCollector collector) {
     Profile profile = (Profile) input.getValue(0);
     name2IdMap.put(profile.getScreenName(), profile.getId());
-
     profile.setAuthority(calculateAuthority(profile));
     collector.emit("storeProfile", new backtype.storm.tuple.Values(profile));
 

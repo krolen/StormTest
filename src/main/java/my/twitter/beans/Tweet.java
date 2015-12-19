@@ -2,7 +2,7 @@ package my.twitter.beans;
 
 import com.fasterxml.jackson.annotation.*;
 
-import java.io.Externalizable;
+import java.util.Arrays;
 
 /**
  * Created by kkulagin on 5/15/2015.
@@ -22,10 +22,16 @@ public class Tweet  {
   private String lang;
   @JsonProperty("source")
   private String source;
+  private long[] mentions;
 
 
+  public long[] getMentions() {
+    return mentions;
+  }
 
-
+  public void setMentions(long[] mentions) {
+    this.mentions = mentions;
+  }
 
   @JsonIgnore // skipped in stream
   private Profile user;
@@ -69,15 +75,18 @@ public class Tweet  {
     return user;
   }
 
+
   @Override
   public String toString() {
     return "Tweet{" +
-      "id=" + id +
-      ", contents='" + contents + '\'' +
-      ", createDate=" + createDate +
-      ", authorId=" + authorId +
-      ", lang='" + lang + '\'' +
-      ", user=" + user +
-      '}';
+        "id=" + id +
+        ", contents='" + contents + '\'' +
+        ", createDate=" + createDate +
+        ", authorId=" + authorId +
+        ", lang='" + lang + '\'' +
+        ", source='" + source + '\'' +
+        ", mentions=" + Arrays.toString(mentions) +
+        ", user=" + user +
+        '}';
   }
 }

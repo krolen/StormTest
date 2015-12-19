@@ -1,12 +1,9 @@
 package my.twitter.topologies;
 
 import backtype.storm.Config;
-import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
-import com.google.common.util.concurrent.Uninterruptibles;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by kkulagin on 10/23/2015.
@@ -29,6 +26,7 @@ public class RemoteSampleTwitterTopology extends SampleTwitterTopology {
   protected Config config() {
     Config conf = super.config();
     conf.put(Config.NIMBUS_HOST, "10.11.18.53");
+    conf.put(Config.TOPOLOGY_NAME, "sampleTweets");
     return conf;
   }
 

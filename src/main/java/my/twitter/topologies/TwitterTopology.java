@@ -2,6 +2,7 @@ package my.twitter.topologies;
 
 import backtype.storm.Config;
 import backtype.storm.generated.StormTopology;
+import backtype.storm.metric.LoggingMetricsConsumer;
 import backtype.storm.topology.IRichSpout;
 import backtype.storm.topology.TopologyBuilder;
 import my.twitter.beans.DeleteTweet;
@@ -9,10 +10,10 @@ import my.twitter.beans.Profile;
 import my.twitter.beans.Tweet;
 import my.twitter.bolts.ErrorBolt;
 import my.twitter.bolts.ParserBolt;
+import my.twitter.bolts.profile.AmendProfileBolt;
 import my.twitter.bolts.profile.StoreProfileBolt;
-import my.twitter.bolts.profile.chronicle.AmendProfileBolt;
 import my.twitter.bolts.tweet.DeleteTweetLogBolt;
-import my.twitter.bolts.tweet.TweetLogBolt;
+import my.twitter.bolts.tweet.TweetMentionsBolt;
 import my.twitter.utils.LogAware;
 
 import java.io.IOException;
@@ -51,10 +52,14 @@ public abstract class TwitterTopology implements LogAware {
     conf.registerSerialization(Profile.class);
     conf.registerSerialization(DeleteTweet.class);
 
+    conf.registerMetricsConsumer(LoggingMetricsConsumer.class, 1);
+
+    conf.put(Config.TOPOLOGY_DEBUG, false);
     conf.put(Config.NIMBUS_THRIFT_PORT, 6627);
     conf.put(Config.TOPOLOGY_ACKER_EXECUTORS, 6);
 
     configureChronicleMapProperties(conf);
+
     return conf;
   }
 
@@ -68,9 +73,10 @@ public abstract class TwitterTopology implements LogAware {
     builder.setBolt("amendProfileBolt", new AmendProfileBolt(), 3).setNumTasks(2).shuffleGrouping("parserBolt", "profile");
     builder.setBolt("storeProfileBolt", new StoreProfileBolt(), 2).setNumTasks(2).shuffleGrouping("amendProfileBolt", "storeProfile");
 
-//    builder.setBolt("profileBolt", new ProfileLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "profile");
-    builder.setBolt("tweetsBolt", new TweetLogBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
+    builder.setBolt("tweetMentions", new TweetMentionsBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
     builder.setBolt("errorBolt", new ErrorBolt(), 1).setNumTasks(1).shuffleGrouping("parserBolt", "err");
-    return builder.createTopology();
+
+    StormTopology topology = builder.createTopology();
+    return topology;
   }
 }
