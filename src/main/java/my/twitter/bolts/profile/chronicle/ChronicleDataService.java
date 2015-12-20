@@ -21,7 +21,7 @@ public abstract class ChronicleDataService {
 
   public abstract  ChronicleMap<Long, IShortProfile> getId2ProfileMap();
 
-  public abstract  ChronicleMap<Long, Long> getTime2IdMap();
+  public abstract  ChronicleMap<Long, Long> getId2TimeMap();
 
   private static volatile ChronicleDataService instance;
 
@@ -44,7 +44,7 @@ public abstract class ChronicleDataService {
   private static class DefaultChronicleDataService extends ChronicleDataService {
 
     private final ChronicleMap<String, Long> name2IdMap;
-    private final ChronicleMap<Long, Long> time2IdMap;
+    private final ChronicleMap<Long, Long> id2TimeMap;
     private ChronicleMap<Long, IShortProfile> id2ProfileMap;
 
     private DefaultChronicleDataService(Map stormConf) {
@@ -60,13 +60,13 @@ public abstract class ChronicleDataService {
         throw new RuntimeException(e);
       }
 
-      String time2IdFileLocation = (String) stormConf.get("profile.time.to.id.file");
+      String time2IdFileLocation = (String) stormConf.get("profile.id.to.time.file");
       File time2IdFile = getFile(time2IdFileLocation);
       ChronicleMapBuilder<Long, Long> time2IdMapBuilder =
           ChronicleMapBuilder.of(Long.class, Long.class).
               entries(System.getProperty("os.name").toLowerCase().contains("win")? 1000 : 400_000_000);
       try {
-        time2IdMap = time2IdMapBuilder.createPersistedTo(time2IdFile);
+        id2TimeMap = time2IdMapBuilder.createPersistedTo(time2IdFile);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -113,8 +113,8 @@ public abstract class ChronicleDataService {
     }
 
     @Override
-    public ChronicleMap<Long, Long> getTime2IdMap() {
-      return time2IdMap;
+    public ChronicleMap<Long, Long> getId2TimeMap() {
+      return id2TimeMap;
     }
 
     @Override

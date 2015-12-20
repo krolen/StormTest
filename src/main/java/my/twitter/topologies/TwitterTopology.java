@@ -34,7 +34,7 @@ public abstract class TwitterTopology implements LogAware {
       throw new RuntimeException(e);
     }
     propagateRequiredValue(config, properties, "profile.name.to.id.file");
-    propagateRequiredValue(config, properties, "profile.time.to.id.file");
+    propagateRequiredValue(config, properties, "profile.id.to.time.file");
     propagateRequiredValue(config, properties, "profile.id.to.profile.file");
   }
 
