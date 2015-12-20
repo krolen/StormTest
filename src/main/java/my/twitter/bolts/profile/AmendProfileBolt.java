@@ -23,11 +23,13 @@ import java.util.Map;
 public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
 
   private transient ChronicleMap<String, Long> name2IdMap;
+  private transient ChronicleMap<Long, Long> time2IdMap;
   private transient ChronicleMap<Long, IShortProfile> id2ProfileMap;
 
   @Override
   public void prepare(Map stormConf, TopologyContext context) {
     name2IdMap = ChronicleDataService.getInstance(stormConf).getName2IdMap();
+    time2IdMap = ChronicleDataService.getInstance(stormConf).getTime2IdMap();
 //    fileLocation = (String) stormConf.get("profile.id.to.profile.file");
 //    file = new File(fileLocation);
 //    ChronicleMapBuilder<Long, IShortProfile> builder =
@@ -46,6 +48,8 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
   public void execute(Tuple input, BasicOutputCollector collector) {
     Profile profile = (Profile) input.getValue(0);
     name2IdMap.put(profile.getScreenName().toLowerCase(), profile.getId());
+    time2IdMap.put(System.currentTimeMillis(), profile.getId());
+
     profile.setAuthority(calculateAuthority(profile));
     collector.emit("storeProfile", new backtype.storm.tuple.Values(profile));
 

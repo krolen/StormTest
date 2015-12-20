@@ -6,4 +6,5 @@ package my.twitter.bolts.profile.chronicle;
 public interface MyMetricsMBean {
 
   long name2IdSize();
+  long time2IdSize();
 }

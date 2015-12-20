@@ -3,6 +3,7 @@ package my.twitter.bolts.profile.chronicle;
 import my.twitter.beans.IShortProfile;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import org.jetbrains.annotations.NotNull;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -19,6 +20,8 @@ public abstract class ChronicleDataService {
   public abstract  ChronicleMap<String, Long> getName2IdMap();
 
   public abstract  ChronicleMap<Long, IShortProfile> getId2ProfileMap();
+
+  public abstract  ChronicleMap<Long, Long> getTime2IdMap();
 
   private static volatile ChronicleDataService instance;
 
@@ -41,10 +44,50 @@ public abstract class ChronicleDataService {
   private static class DefaultChronicleDataService extends ChronicleDataService {
 
     private final ChronicleMap<String, Long> name2IdMap;
+    private final ChronicleMap<Long, Long> time2IdMap;
     private ChronicleMap<Long, IShortProfile> id2ProfileMap;
 
     private DefaultChronicleDataService(Map stormConf) {
-      String fileLocation = (String) stormConf.get("profile.name.to.id.file");
+      String name2IdFileLocation = (String) stormConf.get("profile.name.to.id.file");
+      File name2IdFile = getFile(name2IdFileLocation);
+      ChronicleMapBuilder<String, Long> name2IdMapBuilder =
+          ChronicleMapBuilder.of(String.class, Long.class).
+              averageKey("this_is_18_charctr").
+              entries(System.getProperty("os.name").toLowerCase().contains("win")? 1000 : 400_000_000);
+      try {
+        name2IdMap = name2IdMapBuilder.createPersistedTo(name2IdFile);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      String time2IdFileLocation = (String) stormConf.get("profile.time.to.id.file");
+      File time2IdFile = getFile(time2IdFileLocation);
+      ChronicleMapBuilder<Long, Long> time2IdMapBuilder =
+          ChronicleMapBuilder.of(Long.class, Long.class).
+              entries(System.getProperty("os.name").toLowerCase().contains("win")? 1000 : 400_000_000);
+      try {
+        time2IdMap = time2IdMapBuilder.createPersistedTo(time2IdFile);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+//    name2IdFileLocation = (String) stormConf.get("profile.id.to.profile.name2IdFile");
+//    name2IdFile = new File(name2IdFileLocation);
+//    ChronicleMapBuilder<Long, IShortProfile> builder =
+//      ChronicleMapBuilder.of(Long.class, IShortProfile.class).
+//        constantValueSizeBySample(new ShortProfile()).
+//        entries(400_000_000);
+//    try {
+//      id2ProfileMap = builder.createPersistedTo(name2IdFile);
+//    } catch (IOException e) {
+//      // fail fast
+//      throw new RuntimeException(e);
+//    }
+
+    }
+
+    @NotNull
+    private File getFile(String fileLocation) {
       File file = new File(fileLocation);
       if (!file.exists()) {
         try {
@@ -55,30 +98,7 @@ public abstract class ChronicleDataService {
           throw new RuntimeException(e);
         }
       }
-      ChronicleMapBuilder<String, Long> name2IdMapBuilder =
-          ChronicleMapBuilder.of(String.class, Long.class).
-              averageKey("this_is_18_charctr").
-              entries(System.getProperty("os.name").toLowerCase().contains("win")? 1000 : 400_000_000);
-      try {
-        name2IdMap = name2IdMapBuilder.createPersistedTo(file);
-      } catch (IOException e) {
-        // fail fast
-        throw new RuntimeException(e);
-      }
-
-//    fileLocation = (String) stormConf.get("profile.id.to.profile.file");
-//    file = new File(fileLocation);
-//    ChronicleMapBuilder<Long, IShortProfile> builder =
-//      ChronicleMapBuilder.of(Long.class, IShortProfile.class).
-//        constantValueSizeBySample(new ShortProfile()).
-//        entries(400_000_000);
-//    try {
-//      id2ProfileMap = builder.createPersistedTo(file);
-//    } catch (IOException e) {
-//      // fail fast
-//      throw new RuntimeException(e);
-//    }
-
+      return file;
     }
 
     private void init() {
@@ -90,6 +110,11 @@ public abstract class ChronicleDataService {
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
+    }
+
+    @Override
+    public ChronicleMap<Long, Long> getTime2IdMap() {
+      return time2IdMap;
     }
 
     @Override
