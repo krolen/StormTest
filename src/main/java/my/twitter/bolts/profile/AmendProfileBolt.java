@@ -45,7 +45,7 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
   @Override
   public void execute(Tuple input, BasicOutputCollector collector) {
     Profile profile = (Profile) input.getValue(0);
-    name2IdMap.put(profile.getScreenName(), profile.getId());
+    name2IdMap.put(profile.getScreenName().toLowerCase(), profile.getId());
     profile.setAuthority(calculateAuthority(profile));
     collector.emit("storeProfile", new backtype.storm.tuple.Values(profile));
 

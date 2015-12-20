@@ -49,7 +49,7 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
     while (matcher.find()) {
       mentionsCount++;
       String mention = contents.substring(matcher.start() + 1, matcher.end());
-      Long id = name2IdMap.get(mention);
+      Long id = name2IdMap.get(mention.toLowerCase());
       if (id == null) {
         mentionsMetric.scope("missed_mentions").incr();
       } else {
