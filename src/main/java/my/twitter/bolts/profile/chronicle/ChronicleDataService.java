@@ -1,8 +1,8 @@
 package my.twitter.bolts.profile.chronicle;
 
 import my.twitter.beans.IShortProfile;
+import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.MBeanServer;
@@ -17,21 +17,21 @@ import java.util.Map;
  */
 public abstract class ChronicleDataService {
 
-  public abstract  ChronicleMap<String, Long> getName2IdMap();
+  public abstract ChronicleMap<CharSequence, LongValue> getName2IdMap();
 
-  public abstract  ChronicleMap<Long, IShortProfile> getId2ProfileMap();
+  public abstract ChronicleMap<Long, IShortProfile> getId2ProfileMap();
 
-  public abstract  ChronicleMap<Long, Long> getId2TimeMap();
+  public abstract ChronicleMap<Long, LongValue> getId2TimeMap();
 
   private static volatile ChronicleDataService instance;
 
   public static ChronicleDataService getInstance(Map stormConf) {
-    if(stormConf == null && instance == null) {
+    if (stormConf == null && instance == null) {
       throw new IllegalStateException("Not initialized yet");
     }
-    if(instance == null) {
+    if (instance == null) {
       synchronized (ChronicleDataService.class) {
-        if(instance == null) {
+        if (instance == null) {
           DefaultChronicleDataService created = new DefaultChronicleDataService(stormConf);
           created.init();
           instance = created;
@@ -43,30 +43,28 @@ public abstract class ChronicleDataService {
 
   private static class DefaultChronicleDataService extends ChronicleDataService {
 
-    private final ChronicleMap<String, Long> name2IdMap;
-    private final ChronicleMap<Long, Long> id2TimeMap;
+    private final ChronicleMap<CharSequence, LongValue> name2IdMap;
+    private final ChronicleMap<Long, LongValue> id2TimeMap;
     private ChronicleMap<Long, IShortProfile> id2ProfileMap;
 
     private DefaultChronicleDataService(Map stormConf) {
       String name2IdFileLocation = (String) stormConf.get("profile.name.to.id.file");
       File name2IdFile = getFile(name2IdFileLocation);
-      ChronicleMapBuilder<String, Long> name2IdMapBuilder =
-          ChronicleMapBuilder.of(String.class, Long.class).
-              averageKey("this_is_18_charctr").
-              entries(System.getProperty("os.name").toLowerCase().contains("win")? 1000 : 400_000_000);
       try {
-        name2IdMap = name2IdMapBuilder.createPersistedTo(name2IdFile);
+        name2IdMap = ChronicleMap.of(CharSequence.class, LongValue.class).putReturnsNull(true).
+            averageKeySize("this_is_18_charctr".getBytes().length).
+            entries(System.getProperty("os.name").toLowerCase().contains("win") ? 10_000 : 400_000_000).
+            createPersistedTo(name2IdFile);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
 
       String time2IdFileLocation = (String) stormConf.get("profile.id.to.time.file");
       File time2IdFile = getFile(time2IdFileLocation);
-      ChronicleMapBuilder<Long, Long> time2IdMapBuilder =
-          ChronicleMapBuilder.of(Long.class, Long.class).
-              entries(System.getProperty("os.name").toLowerCase().contains("win")? 1000 : 400_000_000);
       try {
-        id2TimeMap = time2IdMapBuilder.createPersistedTo(time2IdFile);
+        id2TimeMap = ChronicleMap.of(Long.class, LongValue.class).putReturnsNull(true).
+            entries(System.getProperty("os.name").toLowerCase().contains("win") ? 10_000 : 400_000_000).
+            createPersistedTo(time2IdFile);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -113,12 +111,12 @@ public abstract class ChronicleDataService {
     }
 
     @Override
-    public ChronicleMap<Long, Long> getId2TimeMap() {
+    public ChronicleMap<Long, LongValue> getId2TimeMap() {
       return id2TimeMap;
     }
 
     @Override
-    public ChronicleMap<String, Long> getName2IdMap() {
+    public ChronicleMap<CharSequence, LongValue> getName2IdMap() {
       return name2IdMap;
     }
 

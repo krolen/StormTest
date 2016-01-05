@@ -18,7 +18,7 @@ public class LocalSampleTwitterTopology extends SampleTwitterTopology {
     LocalSampleTwitterTopology thisTopology = new LocalSampleTwitterTopology();
     String topologyName = "sampleTwitterStream";
     cluster.submitTopology(topologyName, thisTopology.config(), thisTopology.topology());
-    Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
+    Uninterruptibles.sleepUninterruptibly(300, TimeUnit.SECONDS);
     cluster.killTopology(topologyName);
     cluster.shutdown();
   }

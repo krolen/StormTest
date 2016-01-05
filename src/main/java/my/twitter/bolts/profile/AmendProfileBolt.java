@@ -11,6 +11,7 @@ import my.twitter.beans.IShortProfile;
 import my.twitter.beans.Profile;
 import my.twitter.bolts.profile.chronicle.ChronicleDataService;
 import my.twitter.utils.LogAware;
+import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.values.Values;
 
@@ -22,14 +23,22 @@ import java.util.Map;
  */
 public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
 
-  private transient ChronicleMap<String, Long> name2IdMap;
-  private transient ChronicleMap<Long, Long> id2TimeMap;
+  private transient ChronicleMap<CharSequence, LongValue> name2IdMap;
+  private transient ChronicleMap<Long, LongValue> id2TimeMap;
   private transient ChronicleMap<Long, IShortProfile> id2ProfileMap;
+  private transient StringBuilder nameBuffer;
+  private transient int count;
+  private transient LongValue profileIdValue;
+  private transient LongValue timeValue;
 
   @Override
   public void prepare(Map stormConf, TopologyContext context) {
     name2IdMap = ChronicleDataService.getInstance(stormConf).getName2IdMap();
     id2TimeMap = ChronicleDataService.getInstance(stormConf).getId2TimeMap();
+    nameBuffer = new StringBuilder();
+    profileIdValue = Values.newHeapInstance(LongValue.class);
+    count = 0;
+    timeValue = Values.newHeapInstance(LongValue.class);
 //    fileLocation = (String) stormConf.get("profile.id.to.profile.file");
 //    file = new File(fileLocation);
 //    ChronicleMapBuilder<Long, IShortProfile> builder =
@@ -47,8 +56,15 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
   @Override
   public void execute(Tuple input, BasicOutputCollector collector) {
     Profile profile = (Profile) input.getValue(0);
-    name2IdMap.put(profile.getScreenName().toLowerCase(), profile.getId());
-    id2TimeMap.put(profile.getId(), System.currentTimeMillis());
+    nameBuffer.setLength(0);
+    for (count = 0; count < profile.getScreenName().length(); count++) {
+      nameBuffer.append(Character.toLowerCase(profile.getScreenName().charAt(count)));
+    }
+    profileIdValue.setValue(profile.getId());
+    name2IdMap.put(nameBuffer, profileIdValue);
+
+    timeValue.setValue(System.currentTimeMillis());
+    id2TimeMap.put(profile.getId(), timeValue);
 
     profile.setAuthority(calculateAuthority(profile));
     collector.emit("storeProfile", new backtype.storm.tuple.Values(profile));

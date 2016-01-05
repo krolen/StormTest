@@ -11,7 +11,9 @@ import com.google.common.primitives.Longs;
 import my.twitter.beans.Tweet;
 import my.twitter.bolts.profile.chronicle.ChronicleDataService;
 import my.twitter.utils.LogAware;
+import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.values.Values;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,14 +28,23 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
   private static final Pattern SCREEN_NAME_PATTERN = Pattern.compile("[@＠][a-zA-Z0-9_]+");
 
   private transient MultiCountMetric mentionsMetric;
-  private transient long counter;
-  private transient ChronicleMap<String, Long> name2IdMap;
+  private transient ChronicleMap<CharSequence, LongValue> name2IdMap;
+  private transient StringBuilder mentionBuffer = new StringBuilder();
+  private transient int count = 0;
+  private transient LongValue profileIdValue;
+  private transient int resolvedMentionsCount;
+  private transient long[] mentions;
 
   @Override
   public void prepare(Map stormConf, TopologyContext context) {
     super.prepare(stormConf, context);
     name2IdMap = ChronicleDataService.getInstance(stormConf).getName2IdMap();
     mentionsMetric = new MultiCountMetric();
+    mentionBuffer = new StringBuilder();
+    count = 0;
+    profileIdValue = Values.newHeapInstance(LongValue.class);
+    resolvedMentionsCount = 0;
+    mentions = new long[50];
 
     context.registerMetric("mentions", mentionsMetric, 60);
   }
@@ -42,37 +53,41 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
   public void execute(Tuple input, BasicOutputCollector collector) {
     Tweet tweet = (Tweet) input.getValue(0);
 
-    List<Long> mentions = new ArrayList<>();
     String contents = tweet.getContents();
     Matcher matcher = SCREEN_NAME_PATTERN.matcher(contents);
-    int mentionsCount = 0;
+    resolvedMentionsCount = 0;
     while (matcher.find()) {
-      mentionsCount++;
-      String mention = contents.substring(matcher.start() + 1, matcher.end());
-      Long id = name2IdMap.get(mention.toLowerCase());
-      if (id == null) {
+      mentionBuffer.setLength(0);
+      for (count = matcher.start() + 1; count < matcher.end(); count++) {
+        mentionBuffer.append(Character.toLowerCase(contents.charAt(count)));
+      }
+      profileIdValue = name2IdMap.get(mentionBuffer);
+      if (profileIdValue == null) {
         mentionsMetric.scope("missed_mentions").incr();
       } else {
-        mentions.add(id);
+        mentions[resolvedMentionsCount] = profileIdValue.getValue();
+        resolvedMentionsCount++;
       }
     }
-    if(mentionsCount > 0) {
-      int size = mentions.size();
-      log().warn("Resolved " + size + " of " + mentionsCount + " mentions.");
-      if(size > 0) {
-        mentionsMetric.scope("extracted_mentions").incrBy(size);
-        tweet.setMentions(Longs.toArray(mentions));
-      }
-    }
-    long l = counter++;
-    if (l % 50 == 0) {
-      log().debug(tweet.toString());
+
+//    log().warn("Resolved " + resolvedMentionsCount + " of " + mentionsCount + " mentions.");
+    if(resolvedMentionsCount > 0) {
+        mentionsMetric.scope("extracted_mentions").incrBy(resolvedMentionsCount);
+        long[] result = new long[resolvedMentionsCount - 1];
+        System.arraycopy(mentions, 0, result, 0, resolvedMentionsCount - 1);
+        tweet.setMentions(result);
     }
   }
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
 
+  }
+
+  @Override
+  public void cleanup() {
+    name2IdMap.close();
+    super.cleanup();
   }
 
 }
