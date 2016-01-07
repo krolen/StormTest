@@ -10,6 +10,7 @@ public abstract class SampleTwitterTopology extends TwitterTopology {
 
   @Override
   protected IRichSpout createRootSpout() {
+
     return new SampleTwitterSpout();
   }
 }

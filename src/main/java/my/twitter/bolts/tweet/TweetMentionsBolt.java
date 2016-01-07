@@ -1,13 +1,11 @@
 package my.twitter.bolts.tweet;
 
-import backtype.storm.metric.api.CountMetric;
 import backtype.storm.metric.api.MultiCountMetric;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Tuple;
-import com.google.common.primitives.Longs;
 import my.twitter.beans.Tweet;
 import my.twitter.bolts.profile.chronicle.ChronicleDataService;
 import my.twitter.utils.LogAware;
@@ -15,8 +13,6 @@ import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.values.Values;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

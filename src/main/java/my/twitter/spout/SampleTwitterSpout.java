@@ -7,12 +7,14 @@ import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import com.google.common.util.concurrent.Uninterruptibles;
+import my.twitter.bolts.profile.chronicle.ChronicleDataService;
 import my.twitter.utils.LogAware;
 import twitter4j.RawStreamListener;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -40,7 +42,7 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
   @Override
   public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
     this.collector = collector;
-    setup();
+    setup(conf);
   }
 
   @Override
@@ -68,10 +70,11 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
 
   @Override
   public void close() {
+    log().warn("Shutting down stream...");
     twitterStream.shutdown();
-    log().warn("Closing...");
+    log().warn("Done...");
     int count = 0;
-    while (tweetsCache.size() > 0 && count++ < 30) {
+    while (tweetsCache.size() > 0 && count++ < 10) {
       log().warn("Waiting for empty buffer");
       Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
     }
@@ -79,7 +82,9 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
     super.close();
   }
 
-  private void setup() {
+  private void setup(Map conf) {
+    // init to avoid timeout
+    ChronicleDataService.getInstance(conf);
     RawStreamListener listener = new RawStreamListener() {
       @Override
       public void onMessage(String rawString) {
@@ -102,6 +107,6 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
   }
 
   public static void main(String[] args) {
-    new SampleTwitterSpout().setup();
+    new SampleTwitterSpout().setup(new HashMap<>());
   }
 }

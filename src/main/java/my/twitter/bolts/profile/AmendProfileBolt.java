@@ -10,6 +10,7 @@ import com.google.common.collect.Maps;
 import my.twitter.beans.IShortProfile;
 import my.twitter.beans.Profile;
 import my.twitter.bolts.profile.chronicle.ChronicleDataService;
+import my.twitter.utils.Constants;
 import my.twitter.utils.LogAware;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -24,7 +25,7 @@ import java.util.Map;
 public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
 
   private transient ChronicleMap<CharSequence, LongValue> name2IdMap;
-  private transient ChronicleMap<Long, LongValue> id2TimeMap;
+  private transient ChronicleMap<LongValue, LongValue> id2TimeMap;
   private transient ChronicleMap<Long, IShortProfile> id2ProfileMap;
   private transient StringBuilder nameBuffer;
   private transient int count;
@@ -33,8 +34,10 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
 
   @Override
   public void prepare(Map stormConf, TopologyContext context) {
+    System.out.println("Amend setup start");
     name2IdMap = ChronicleDataService.getInstance(stormConf).getName2IdMap();
     id2TimeMap = ChronicleDataService.getInstance(stormConf).getId2TimeMap();
+    System.out.println("Maps done");
     nameBuffer = new StringBuilder();
     profileIdValue = Values.newHeapInstance(LongValue.class);
     count = 0;
@@ -51,6 +54,7 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
 //      // fail fast
 //      throw new RuntimeException(e);
 //    }
+    System.out.println("Amend setup done");
   }
 
   @Override
@@ -64,7 +68,8 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
     name2IdMap.put(nameBuffer, profileIdValue);
 
     timeValue.setValue(System.currentTimeMillis());
-    id2TimeMap.put(profile.getId(), timeValue);
+    id2TimeMap.put(profileIdValue, timeValue);
+//    id2TimeMap.put(profile.getId(), timeValue);
 
     profile.setAuthority(calculateAuthority(profile));
     collector.emit("storeProfile", new backtype.storm.tuple.Values(profile));
@@ -119,8 +124,8 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
 
   public static void main(String[] args) {
     HashMap<Object, Object> map = Maps.newHashMap();
-    map.put("profile.name.to.id.file", "c:/data/profile/name2id");
-    map.put("profile.id.to.profile.file", "c:/data/profile/id2profile");
+    map.put(Constants.NAME_2_ID, "c:/data/profile/name2id");
+    map.put(Constants.ID_2_PROFILE, "c:/data/profile/id2profile");
     AmendProfileBolt amendProfileBolt = new AmendProfileBolt();
     amendProfileBolt.prepare(map, null);
 

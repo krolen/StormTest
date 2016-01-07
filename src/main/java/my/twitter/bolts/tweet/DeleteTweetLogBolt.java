@@ -34,7 +34,7 @@ public class DeleteTweetLogBolt extends BaseRichBolt implements LogAware {
       byte[] deleteTweetBytes = input.getBinaryByField("deleteTweet");
       DeleteTweet deleteTweet = objectMapper.readValue(deleteTweetBytes, 10, deleteTweetBytes.length - 11, DeleteTweet.class);
       long l = counter++;
-      if (l % 2 == 0) {
+      if (l % 50 == 0) {
         log().warn(deleteTweet.toString());
       }
       collector.ack(input);

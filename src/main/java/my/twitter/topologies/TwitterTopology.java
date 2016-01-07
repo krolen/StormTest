@@ -14,6 +14,7 @@ import my.twitter.bolts.profile.AmendProfileBolt;
 import my.twitter.bolts.profile.StoreProfileBolt;
 import my.twitter.bolts.tweet.DeleteTweetLogBolt;
 import my.twitter.bolts.tweet.TweetMentionsBolt;
+import my.twitter.utils.Constants;
 import my.twitter.utils.LogAware;
 
 import java.io.IOException;
@@ -33,9 +34,9 @@ public abstract class TwitterTopology implements LogAware {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    propagateRequiredValue(config, properties, "profile.name.to.id.file");
-    propagateRequiredValue(config, properties, "profile.id.to.time.file");
-    propagateRequiredValue(config, properties, "profile.id.to.profile.file");
+    propagateRequiredValue(config, properties, Constants.NAME_2_ID);
+    propagateRequiredValue(config, properties, Constants.ID_2_TIME);
+    propagateRequiredValue(config, properties, Constants.ID_2_PROFILE);
   }
 
   private static void propagateRequiredValue(Config config, Properties properties, String propName) {
