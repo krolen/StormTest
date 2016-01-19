@@ -12,7 +12,7 @@
         <storm.version>0.10.0</storm.version>
         <t4j.version>[4.0,)</t4j.version>
         <jackson.version>2.6.3</jackson.version>
-        <chronicle.map.version>3.4.0-beta-SNAPSHOT</chronicle.map.version>
+        <chronicle.map.version>3.5.0-beta-SNAPSHOT</chronicle.map.version>
         <!--<chronicle.map.version>3.4.0-beta-20151230.193741-27</chronicle.map.version>-->
     </properties>
 
