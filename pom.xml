@@ -12,7 +12,7 @@
         <storm.version>0.10.0</storm.version>
         <t4j.version>[4.0,)</t4j.version>
         <jackson.version>2.6.3</jackson.version>
-        <chronicle.map.version>3.5.0-beta-SNAPSHOT</chronicle.map.version>
+        <chronicle.map.version>3.8.0</chronicle.map.version>
         <!--<chronicle.map.version>3.4.0-beta-20151230.193741-27</chronicle.map.version>-->
     </properties>
 
@@ -123,6 +123,12 @@
                     <artifactId>slf4j-log4j12</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>websocket-client</artifactId>
+            <version>9.3.8.v20160314</version>
         </dependency>
 
 

@@ -29,6 +29,7 @@ public class ParserBolt extends BaseBasicBolt implements LogAware {
         log().debug("Emitting deleted tweet.");
         collector.emit("deleteTweet", new Values(binaryInput));
       } else {
+        // TODO: 3/29/2016 optimize to skip unnecessary values using jackson stream reader
         Tweet tweet = objectMapper.readValue(binaryInput, Tweet.class);
         collector.emit("profile", new Values(tweet.getUser()));
         tweet.prepareForSerialization();

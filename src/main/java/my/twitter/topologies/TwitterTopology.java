@@ -13,6 +13,7 @@ import my.twitter.bolts.ParserBolt;
 import my.twitter.bolts.profile.AmendProfileBolt;
 import my.twitter.bolts.profile.StoreProfileBolt;
 import my.twitter.bolts.tweet.DeleteTweetLogBolt;
+import my.twitter.bolts.tweet.TweetIndexerBolt;
 import my.twitter.bolts.tweet.TweetMentionsBolt;
 import my.twitter.utils.Constants;
 import my.twitter.utils.LogAware;
@@ -37,6 +38,10 @@ public abstract class TwitterTopology implements LogAware {
     propagateRequiredValue(config, properties, Constants.NAME_2_ID);
     propagateRequiredValue(config, properties, Constants.ID_2_TIME);
     propagateRequiredValue(config, properties, Constants.ID_2_PROFILE);
+
+    // TODO: 3/30/2016 parametrize
+    config.put(Constants.TWEET_INDEXER_HOST, "localhost");
+    config.put(Constants.TWEET_INDEXER_PORT, 8080);
   }
 
   private static void propagateRequiredValue(Config config, Properties properties, String propName) {
@@ -76,6 +81,11 @@ public abstract class TwitterTopology implements LogAware {
     builder.setBolt("storeProfileBolt", new StoreProfileBolt(), 2).setNumTasks(2).shuffleGrouping("amendProfileBolt", "storeProfile");
 
     builder.setBolt("tweetMentions", new TweetMentionsBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
+
+    builder.setBolt("tweetIndexer0", new TweetIndexerBolt(), 1).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
+    builder.setBolt("tweetIndexer1", new TweetIndexerBolt(), 1).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
+    builder.setBolt("tweetIndexer2", new TweetIndexerBolt(), 1).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
+
     builder.setBolt("errorBolt", new ErrorBolt(), 1).setNumTasks(1).shuffleGrouping("parserBolt", "err");
 
     StormTopology topology = builder.createTopology();

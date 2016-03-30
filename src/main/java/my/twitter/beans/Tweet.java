@@ -24,6 +24,19 @@ public class Tweet  {
   private String source;
   private long[] mentions;
 
+  public Tweet() {
+  }
+
+  public Tweet(long id, String contents, long createDate, long authorId, String lang, String source, long[] mentions, Profile user) {
+    this.id = id;
+    this.contents = contents;
+    this.createDate = createDate;
+    this.authorId = authorId;
+    this.lang = lang;
+    this.source = source;
+    this.mentions = mentions;
+    this.user = user;
+  }
 
   public long[] getMentions() {
     return mentions;
