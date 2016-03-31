@@ -41,7 +41,7 @@ public abstract class TwitterTopology implements LogAware {
 
     // TODO: 3/30/2016 parametrize
     config.put(Constants.TWEET_INDEXER_HOST, "localhost");
-    config.put(Constants.TWEET_INDEXER_PORT, 8080);
+    config.put(Constants.TWEET_INDEXER_PORT, 8880);
   }
 
   private static void propagateRequiredValue(Config config, Properties properties, String propName) {
