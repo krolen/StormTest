@@ -1,19 +1,13 @@
 package my.twitter.bolts.tweet;
 
-import backtype.storm.generated.GlobalStreamId;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
-import backtype.storm.tuple.Fields;
-import backtype.storm.tuple.MessageId;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.TupleImpl;
-import com.google.common.collect.ImmutableMap;
 import my.twitter.beans.Tweet;
 import my.twitter.utils.Constants;
 import my.twitter.utils.LogAware;
-import org.apache.storm.shade.com.google.common.collect.ImmutableList;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
@@ -23,11 +17,13 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.*;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -38,35 +34,81 @@ import java.util.concurrent.TimeUnit;
  */
 public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
 
+  public static final int INDEXERS_NUMBER = 3;
+  private static final long MILLIS_PER_HOUR = Duration.ofHours(1).toMillis();
+  private static final long HOUR_SHIFT = 0xFF_FF_FF_FF_FF_FF_FF_E0L;
+
   private WebSocketClient client;
-  private SimpleSocket socket;
-  private RemoteEndpoint remote;
-  private Session session;
+  private Map<Long, RemoteEndpoint> time2Indexer = new HashMap<>();
 
   @Override
   public void prepare(Map stormConf, TopologyContext context) {
     System.setProperty("org.eclipse.jetty.websocket.LEVEL", "INFO");
-    String thisComponentId = context.getThisComponentId();
-    int indexerId = Integer.parseInt(thisComponentId.substring(thisComponentId.length() - 1));
-    String indexerHost = Optional.ofNullable((String) stormConf.get(Constants.TWEET_INDEXER_HOST)).orElse("localhost");
-    int indexerPort = Optional.ofNullable((Integer) stormConf.get(Constants.TWEET_INDEXER_PORT)).orElse(8080) + indexerId;
-    String destUri = "ws://" + indexerHost + ":" + indexerPort + "/textSaveTweet";
-    log().info("Setting web socket connection to " + destUri);
 
     client = new WebSocketClient();
-    socket = new SimpleSocket();
-
     try {
-      QueuedThreadPool threadPool = new QueuedThreadPool(5, 1);
-      String name = WebSocketClient.class.getSimpleName() + "@" + hashCode();
-      threadPool.setName(name);
+      QueuedThreadPool threadPool = new QueuedThreadPool(20, 8);
+      threadPool.setName(WebSocketClient.class.getSimpleName() + "@" + hashCode());
       threadPool.setDaemon(true);
       client.setExecutor(threadPool);
       client.start();
-      URI echoUri = new URI(destUri);
-      ClientUpgradeRequest request = new ClientUpgradeRequest();
-      System.out.printf("Connecting to : %s%n", echoUri);
-      client.connect(socket, echoUri, request);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    Instant now = Instant.now();
+    LocalDateTime dateTime = LocalDateTime.ofInstant(now, ZoneId.systemDefault());
+    LocalDateTime dayStart = dateTime.with(LocalTime.MIN);
+    LocalDateTime dayBefore = dayStart.minusDays(1);
+    long dayBeforeStartInMillis = dayBefore.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+    for (int i = 0; i < INDEXERS_NUMBER; i++) {
+      String indexerUrl = getIndexerUrl(stormConf, i);
+      log().info("Establishing web socket connection to " + indexerUrl);
+      RemoteEndpoint remoteEndpoint = openSocket(indexerUrl);
+      log().info("Connection established");
+      long start = dayBeforeStartInMillis + i * MILLIS_PER_HOUR;
+      // TODO: 3/31/2016 make it dynamic - for now it will fill around 100 days
+      for (int j = 0; j < 1000; j++) {
+        time2Indexer.put(start + j * INDEXERS_NUMBER * MILLIS_PER_HOUR, remoteEndpoint);
+      }
+    }
+
+    log().info("TweetIndexerBolt started");
+  }
+
+  @NotNull
+  private String getIndexerUrl(Map stormConf, int indexerId) {
+    String indexerHost = Optional.ofNullable((String) stormConf.get(Constants.TWEET_INDEXER_HOST)).orElse("localhost");
+    int indexerPort = Optional.ofNullable((Integer) stormConf.get(Constants.TWEET_INDEXER_PORT)).orElse(8080) + indexerId;
+    return "ws://" + indexerHost + ":" + indexerPort + "/textSaveTweet";
+  }
+
+  @Override
+  public void execute(Tuple input, BasicOutputCollector collector) {
+    Tweet tweet = (Tweet) input.getValue(0);
+    long createDate = tweet.getCreateDate();
+    long prevHour = createDate & HOUR_SHIFT;
+    long prevPrevHour = prevHour - MILLIS_PER_HOUR;
+    RemoteEndpoint prevHourEndpoint = time2Indexer.get(prevHour);
+    RemoteEndpoint prevPrevHourEndpoint = time2Indexer.get(prevPrevHour);
+    send(tweet, prevHourEndpoint);
+    send(tweet, prevPrevHourEndpoint);
+  }
+
+  private void send(Tweet tweet, RemoteEndpoint remote) {
+    try {
+      remote.sendString(tweet.getId() + "|" + tweet.getCreateDate() + "|" + tweet.getContents());
+    } catch (Exception e) {
+      log().error("Error sending message to indexer ", e);
+    }
+  }
+
+  private RemoteEndpoint openSocket(String destUri) {
+    log().info("Connecting to : %s%n", destUri);
+    SimpleSocket socket = new SimpleSocket();
+    try {
+      client.connect(socket, new URI(destUri), new ClientUpgradeRequest());
       if (!socket.getOpenLatch().await(5, TimeUnit.SECONDS)) {
         throw new RuntimeException("Cannot connect to a server!!!!");
       }
@@ -74,21 +116,10 @@ public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
       throw new RuntimeException(e);
     }
 
-    session = socket.getSession();
-    remote = session.getRemote();
-
-    log().info("Connected");
+    Session session = socket.getSession();
+    return session.getRemote();
   }
 
-  @Override
-  public void execute(Tuple input, BasicOutputCollector collector) {
-    Tweet tweet = (Tweet) input.getValue(0);
-    try {
-      remote.sendString(tweet.getId() + "|" + tweet.getCreateDate() + "|" + tweet.getContents());
-    } catch (IOException e) {
-      log().error("Error sending message to indexer ", e);
-    }
-  }
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
@@ -143,7 +174,7 @@ public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
 
     @OnWebSocketMessage
     public void onMessage(String msg) {
-      log().debug("Got msg: %s%n", msg);
+      log().info("Got msg: %s%n", msg);
     }
 
     public Session getSession() {
@@ -152,175 +183,6 @@ public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
 
     public CountDownLatch getOpenLatch() {
       return openLatch;
-    }
-  }
-
-  public static void main(String[] args) {
-    TweetIndexerBolt bolt = new TweetIndexerBolt();
-
-    try {
-      bolt.prepare(new HashMap<>(), new TopologyContext(null, null, ImmutableMap.of(5, "tweetIndexer0"), null, null, null, null, null, 5,
-          null, null, null, null, null, null, null));
-
-      Tweet tweet = new Tweet(12345, "Yoyo this is super-mega tweet", System.currentTimeMillis(), 100, null, "source", null, null);
-      bolt.execute(new Tuple() {
-        @Override
-        public GlobalStreamId getSourceGlobalStreamid() {
-          return null;
-        }
-
-        @Override
-        public String getSourceComponent() {
-          return null;
-        }
-
-        @Override
-        public int getSourceTask() {
-          return 0;
-        }
-
-        @Override
-        public String getSourceStreamId() {
-          return null;
-        }
-
-        @Override
-        public MessageId getMessageId() {
-          return null;
-        }
-
-        @Override
-        public int size() {
-          return 0;
-        }
-
-        @Override
-        public boolean contains(String field) {
-          return false;
-        }
-
-        @Override
-        public Fields getFields() {
-          return null;
-        }
-
-        @Override
-        public int fieldIndex(String field) {
-          return 0;
-        }
-
-        @Override
-        public List<Object> select(Fields selector) {
-          return null;
-        }
-
-        @Override
-        public Object getValue(int i) {
-          return tweet;
-        }
-
-        @Override
-        public String getString(int i) {
-          return null;
-        }
-
-        @Override
-        public Integer getInteger(int i) {
-          return null;
-        }
-
-        @Override
-        public Long getLong(int i) {
-          return null;
-        }
-
-        @Override
-        public Boolean getBoolean(int i) {
-          return null;
-        }
-
-        @Override
-        public Short getShort(int i) {
-          return null;
-        }
-
-        @Override
-        public Byte getByte(int i) {
-          return null;
-        }
-
-        @Override
-        public Double getDouble(int i) {
-          return null;
-        }
-
-        @Override
-        public Float getFloat(int i) {
-          return null;
-        }
-
-        @Override
-        public byte[] getBinary(int i) {
-          return new byte[0];
-        }
-
-        @Override
-        public Object getValueByField(String field) {
-          return null;
-        }
-
-        @Override
-        public String getStringByField(String field) {
-          return null;
-        }
-
-        @Override
-        public Integer getIntegerByField(String field) {
-          return null;
-        }
-
-        @Override
-        public Long getLongByField(String field) {
-          return null;
-        }
-
-        @Override
-        public Boolean getBooleanByField(String field) {
-          return null;
-        }
-
-        @Override
-        public Short getShortByField(String field) {
-          return null;
-        }
-
-        @Override
-        public Byte getByteByField(String field) {
-          return null;
-        }
-
-        @Override
-        public Double getDoubleByField(String field) {
-          return null;
-        }
-
-        @Override
-        public Float getFloatByField(String field) {
-          return null;
-        }
-
-        @Override
-        public byte[] getBinaryByField(String field) {
-          return new byte[0];
-        }
-
-        @Override
-        public List<Object> getValues() {
-          return null;
-        }
-      }, null);
-    } finally {
-      bolt.cleanup();
     }
   }
 
