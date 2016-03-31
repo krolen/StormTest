@@ -80,7 +80,7 @@ public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
   @NotNull
   private String getIndexerUrl(Map stormConf, int indexerId) {
     String indexerHost = Optional.ofNullable((String) stormConf.get(Constants.TWEET_INDEXER_HOST)).orElse("localhost");
-    int indexerPort = Optional.ofNullable((Integer) stormConf.get(Constants.TWEET_INDEXER_PORT)).orElse(8080) + indexerId;
+    long indexerPort = Optional.ofNullable((Long) stormConf.get(Constants.TWEET_INDEXER_PORT)).orElse(8880L) + indexerId;
     return "ws://" + indexerHost + ":" + indexerPort + "/textSaveTweet";
   }
 

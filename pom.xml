@@ -167,6 +167,10 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <excludeArtifactIds>
+                                tools,storm-core,reflectasm,kryo,minlog,disruptor,asm,clojure,log4j-slf4j-impl,log4j-core,log4j-api
+                            </excludeArtifactIds>
+                            <includeScope>compile</includeScope>
                         </configuration>
                     </execution>
                 </executions>

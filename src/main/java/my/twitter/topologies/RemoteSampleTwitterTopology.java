@@ -2,6 +2,7 @@ package my.twitter.topologies;
 
 import backtype.storm.Config;
 import backtype.storm.StormSubmitter;
+import my.twitter.utils.Constants;
 
 import java.io.IOException;
 
@@ -27,6 +28,7 @@ public class RemoteSampleTwitterTopology extends SampleTwitterTopology {
     Config conf = super.config();
     conf.put(Config.NIMBUS_HOST, "10.11.18.53");
     conf.put(Config.TOPOLOGY_NAME, "sampleTweets");
+    conf.put(Constants.TWEET_INDEXER_HOST, "10.11.18.53");
     return conf;
   }
 
