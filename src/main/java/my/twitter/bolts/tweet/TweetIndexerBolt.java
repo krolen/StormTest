@@ -8,6 +8,7 @@ import backtype.storm.tuple.Tuple;
 import my.twitter.beans.Tweet;
 import my.twitter.utils.Constants;
 import my.twitter.utils.LogAware;
+import org.apache.storm.shade.com.google.common.base.Joiner;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
@@ -23,11 +24,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Created by kkulagin on 5/13/2015.
@@ -36,10 +36,9 @@ public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
 
   public static final int INDEXERS_NUMBER = 3;
   private static final long MILLIS_PER_HOUR = Duration.ofHours(1).toMillis();
-  private static final long HOUR_SHIFT = 0xFF_FF_FF_FF_FF_FF_FF_E0L;
 
-  private WebSocketClient client;
-  private Map<Long, RemoteEndpoint> time2Indexer = new HashMap<>();
+  private transient WebSocketClient client;
+  private transient NavigableMap<Long, RemoteEndpoint> time2Indexer = new TreeMap<>();
 
   @Override
   public void prepare(Map stormConf, TopologyContext context) {
@@ -68,6 +67,7 @@ public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
       RemoteEndpoint remoteEndpoint = openSocket(indexerUrl);
       log().info("Connection established");
       long start = dayBeforeStartInMillis + i * MILLIS_PER_HOUR;
+      log().info("Connection established");
       // TODO: 3/31/2016 make it dynamic - for now it will fill around 100 days
       for (int j = 0; j < 1000; j++) {
         time2Indexer.put(start + j * INDEXERS_NUMBER * MILLIS_PER_HOUR, remoteEndpoint);
@@ -88,19 +88,25 @@ public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
   public void execute(Tuple input, BasicOutputCollector collector) {
     Tweet tweet = (Tweet) input.getValue(0);
     long createDate = tweet.getCreateDate();
-    long prevHour = createDate & HOUR_SHIFT;
-    long prevPrevHour = prevHour - MILLIS_PER_HOUR;
-    RemoteEndpoint prevHourEndpoint = time2Indexer.get(prevHour);
-    RemoteEndpoint prevPrevHourEndpoint = time2Indexer.get(prevPrevHour);
+    Map.Entry<Long, RemoteEndpoint> floorEntry = time2Indexer.floorEntry(createDate);
+    RemoteEndpoint prevHourEndpoint = floorEntry.getValue();
+    RemoteEndpoint prevPrevHourEndpoint = time2Indexer.get(floorEntry.getKey() - MILLIS_PER_HOUR);
     send(tweet, prevHourEndpoint);
     send(tweet, prevPrevHourEndpoint);
   }
 
   private void send(Tweet tweet, RemoteEndpoint remote) {
+    Exception exception = null;
     try {
       remote.sendString(tweet.getId() + "|" + tweet.getCreateDate() + "|" + tweet.getContents());
+    } catch (IOException e) {
+      log().error("Error sending message to indexer ", e);
+      exception = e;
     } catch (Exception e) {
       log().error("Error sending message to indexer ", e);
+    }
+    if(exception != null) {
+      throw new RuntimeException(exception);
     }
   }
 

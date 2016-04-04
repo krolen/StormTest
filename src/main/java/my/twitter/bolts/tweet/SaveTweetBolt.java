@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 /**
  * Created by kkulagin on 5/13/2015.
  */
-public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
+public class SaveTweetBolt extends BaseBasicBolt implements LogAware {
   private static final Pattern SCREEN_NAME_PATTERN = Pattern.compile("[@＠][a-zA-Z0-9_]+");
 
   private transient MultiCountMetric mentionsMetric;

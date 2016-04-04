@@ -39,9 +39,6 @@ public abstract class TwitterTopology implements LogAware {
     propagateRequiredValue(config, properties, Constants.ID_2_TIME);
     propagateRequiredValue(config, properties, Constants.ID_2_PROFILE);
 
-    // TODO: 3/30/2016 parametrize
-    config.put(Constants.TWEET_INDEXER_HOST, "localhost");
-    config.put(Constants.TWEET_INDEXER_PORT, 8880);
   }
 
   private static void propagateRequiredValue(Config config, Properties properties, String propName) {
@@ -82,7 +79,7 @@ public abstract class TwitterTopology implements LogAware {
 
     builder.setBolt("tweetMentions", new TweetMentionsBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
 
-    builder.setBolt("tweetIndexer", new TweetIndexerBolt(), 1).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
+    builder.setBolt("tweetIndexer", new TweetIndexerBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
 
     builder.setBolt("errorBolt", new ErrorBolt(), 1).setNumTasks(1).shuffleGrouping("parserBolt", "err");
 
