@@ -1,7 +1,7 @@
 package my;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import my.twitter.beans.Tweet;
+import my.twister.storm.beans.Tweet;
 import org.junit.Test;
 
 import java.io.File;
