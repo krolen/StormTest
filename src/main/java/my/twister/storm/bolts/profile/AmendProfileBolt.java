@@ -63,11 +63,15 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
   public void execute(Tuple input, BasicOutputCollector collector) {
     Profile profile = (Profile) input.getValue(0);
     nameBuffer.setLength(0);
-    for (count = 0; count < profile.getScreenName().length(); count++) {
-      nameBuffer.append(Character.toLowerCase(profile.getScreenName().charAt(count)));
-    }
     profileIdValue.setValue(profile.getId());
-    name2IdMap.put(nameBuffer, profileIdValue);
+
+    String screenName = profile.getScreenName();
+    if (screenName != null) {
+      for (count = 0; count < screenName.length(); count++) {
+        nameBuffer.append(Character.toLowerCase(screenName.charAt(count)));
+      }
+      name2IdMap.put(nameBuffer, profileIdValue);
+    }
 
     timeValue.setValue(System.currentTimeMillis());
     id2TimeMap.put(profileIdValue, timeValue);
