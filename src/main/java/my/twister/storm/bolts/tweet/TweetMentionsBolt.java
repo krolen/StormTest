@@ -5,6 +5,7 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import my.twister.chronicle.ChronicleDataService;
 import my.twister.storm.beans.Tweet;
@@ -38,7 +39,7 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
   public void prepare(Map stormConf, TopologyContext context) {
     super.prepare(stormConf, context);
     chronicleDataService = StormCDSSingletonWrapper.getInstance();
-    chronicleDataService.connect(4);
+    chronicleDataService.connect(3);
     name2IdMap = chronicleDataService.getName2IdMap();
     mentionsMetric = new MultiCountMetric();
     mentionBuffer = new StringBuilder();
@@ -78,11 +79,14 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
         System.arraycopy(mentions, 0, result, 0, resolvedMentionsCount - 1);
         tweet.setMentions(result);
     }
+
+    collector.emit("tweet", new backtype.storm.tuple.Values(tweet));
+
   }
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-
+    declarer.declareStream("tweet", new Fields("tweet"));
   }
 
   @Override

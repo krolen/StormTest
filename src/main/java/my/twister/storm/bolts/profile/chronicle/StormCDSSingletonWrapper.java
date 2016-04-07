@@ -6,7 +6,8 @@ import my.twister.entities.IShortTweet;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
 
-import javax.management.*;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 
 /**
@@ -58,7 +59,7 @@ public class StormCDSSingletonWrapper extends ChronicleDataService {
   public synchronized void connect(int i) {
     log().info("Connecting map services, number of open connections " + connections);
     if (connections == 0) {
-      wrapped.connect(4);
+      wrapped.connect(3);
       try {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         ObjectName name = new ObjectName("my.metric.chronicle:type=MyMetrics");

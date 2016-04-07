@@ -13,6 +13,7 @@ import my.twister.storm.bolts.ParserBolt;
 import my.twister.storm.bolts.profile.AmendProfileBolt;
 import my.twister.storm.bolts.profile.StoreProfileBolt;
 import my.twister.storm.bolts.tweet.DeleteTweetLogBolt;
+import my.twister.storm.bolts.tweet.SaveTweetBolt;
 import my.twister.storm.bolts.tweet.TweetIndexerBolt;
 import my.twister.storm.bolts.tweet.TweetMentionsBolt;
 import my.twister.utils.LogAware;
@@ -52,6 +53,8 @@ public abstract class TwitterTopology implements LogAware {
     builder.setBolt("storeProfileBolt", new StoreProfileBolt(), 2).setNumTasks(2).shuffleGrouping("amendProfileBolt", "storeProfile");
 
     builder.setBolt("tweetMentions", new TweetMentionsBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
+
+    builder.setBolt("tweetSave", new SaveTweetBolt(), 1).setNumTasks(1).shuffleGrouping("tweetMentions", "tweet");
 
     builder.setBolt("tweetIndexer", new TweetIndexerBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
 

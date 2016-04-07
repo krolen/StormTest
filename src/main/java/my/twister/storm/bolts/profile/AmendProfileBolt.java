@@ -35,7 +35,7 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
   public void prepare(Map stormConf, TopologyContext context) {
     System.out.println("Amend setup start");
     chronicleDataService = StormCDSSingletonWrapper.getInstance();
-    chronicleDataService.connect(4);
+    chronicleDataService.connect(3);
 
     name2IdMap = chronicleDataService.getName2IdMap();
     id2TimeMap = chronicleDataService.getId2TimeMap();
@@ -75,7 +75,6 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
 
     timeValue.setValue(System.currentTimeMillis());
     id2TimeMap.put(profileIdValue, timeValue);
-//    id2TimeMap.put(profile.getId(), timeValue);
 
     profile.setAuthority(calculateAuthority(profile));
     collector.emit("storeProfile", new backtype.storm.tuple.Values(profile));
