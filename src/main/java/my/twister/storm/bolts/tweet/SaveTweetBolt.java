@@ -39,13 +39,19 @@ public class SaveTweetBolt extends BaseBasicBolt implements LogAware {
   @Override
   public void execute(Tuple input, BasicOutputCollector collector) {
     Tweet t = (Tweet) input.getValue(0);
-    ChronicleMap<LongValue, IShortTweet> tweetsDataMap = chronicleDataService.getTweetsDataMap(t.getId());
+    ChronicleMap<LongValue, IShortTweet> tweetsDataMap = chronicleDataService.getTweetsDataMap(t.getCreateDate());
     if(tweetsDataMap == null) {
-      log().error("Cannot find storage for tweet " + t.getId());
+      log().error("Cannot find storage for tweet " + t);
     } else {
       tweetId.setValue(t.getId());
 
-      tweet.setMentions(t.getMentions());
+      long[] mentions = t.getMentions();
+      if(mentions != null) {
+        for (int i = 0; i < mentions.length; i++) {
+          long mention = mentions[i];
+          tweet.setMentionAt(i, mention);
+        }
+      }
       tweet.setAuthorId(t.getAuthorId());
       tweet.setCreateDate(t.getCreateDate());
       tweetsDataMap.put(tweetId, tweet);
