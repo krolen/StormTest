@@ -89,10 +89,14 @@ public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
     Tweet tweet = (Tweet) input.getValue(0);
     long createDate = tweet.getCreateDate();
     Map.Entry<Long, RemoteEndpoint> floorEntry = time2Indexer.floorEntry(createDate);
-    RemoteEndpoint prevHourEndpoint = floorEntry.getValue();
-    RemoteEndpoint prevPrevHourEndpoint = time2Indexer.get(floorEntry.getKey() - MILLIS_PER_HOUR);
-    send(tweet, prevHourEndpoint);
-    send(tweet, prevPrevHourEndpoint);
+    if(floorEntry == null) {
+      log().error("Cannot find time entry for tweet " + tweet);
+    } else {
+      RemoteEndpoint prevHourEndpoint = floorEntry.getValue();
+      RemoteEndpoint prevPrevHourEndpoint = time2Indexer.get(floorEntry.getKey() - MILLIS_PER_HOUR);
+      send(tweet, prevHourEndpoint);
+      send(tweet, prevPrevHourEndpoint);
+    }
   }
 
   private void send(Tweet tweet, RemoteEndpoint remote) {
