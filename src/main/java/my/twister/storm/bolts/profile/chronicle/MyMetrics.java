@@ -14,12 +14,12 @@ public class MyMetrics implements MyMetricsMBean {
 
   @Override
   public long name2IdSize() {
-    return chronicleDataService.getName2IdMap().longSize();
+    return 0L;
   }
 
   @Override
   public long id2TimeSize() {
-    return chronicleDataService.getId2TimeMap().longSize();
+    return 0L;
   }
 
 }

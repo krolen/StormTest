@@ -8,7 +8,6 @@ import backtype.storm.tuple.Tuple;
 import my.twister.chronicle.ChronicleDataService;
 import my.twister.entities.IShortTweet;
 import my.twister.storm.beans.Tweet;
-import my.twister.storm.bolts.profile.chronicle.StormCDSSingletonWrapper;
 import my.twister.utils.LogAware;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -24,14 +23,14 @@ public class StoreTweetBolt extends BaseBasicBolt implements LogAware {
   private transient LongValue tweetId;
   private transient IShortTweet tweet;
 
-  private ChronicleDataService chronicleDataService;
+  private transient ChronicleDataService chronicleDataService;
 
 
   @Override
   public void prepare(Map stormConf, TopologyContext context) {
     super.prepare(stormConf, context);
-    chronicleDataService = StormCDSSingletonWrapper.getInstance();
-    chronicleDataService.connect(3);
+    chronicleDataService = ChronicleDataService.getInstance();
+    chronicleDataService.connectTweetsMaps(3);
     tweet = Values.newHeapInstance(IShortTweet.class);
     tweetId = Values.newHeapInstance(LongValue.class);
   }

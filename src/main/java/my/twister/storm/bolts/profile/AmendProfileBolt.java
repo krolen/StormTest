@@ -7,12 +7,9 @@ import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import my.twister.chronicle.ChronicleDataService;
-import my.twister.entities.IShortProfile;
 import my.twister.storm.beans.Profile;
-import my.twister.storm.bolts.profile.chronicle.StormCDSSingletonWrapper;
 import my.twister.utils.LogAware;
 import net.openhft.chronicle.core.values.LongValue;
-import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.values.Values;
 
 import java.util.Map;
@@ -22,40 +19,25 @@ import java.util.Map;
  */
 public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
 
-  private transient ChronicleMap<CharSequence, LongValue> name2IdMap;
-  private transient ChronicleMap<LongValue, LongValue> id2TimeMap;
-  private transient ChronicleMap<Long, IShortProfile> id2ProfileMap;
   private transient StringBuilder nameBuffer;
   private transient int count;
   private transient LongValue profileIdValue;
   private transient LongValue timeValue;
-  private ChronicleDataService chronicleDataService;
+  private transient ChronicleDataService chronicleDataService;
+  private transient ChronicleDataService.MapReference<LongValue, LongValue> id2TimeMapReference;
+  private transient ChronicleDataService.MapReference<CharSequence, LongValue> name2IdMapReference;
 
   @Override
   public void prepare(Map stormConf, TopologyContext context) {
     System.out.println("Amend setup start");
-    chronicleDataService = StormCDSSingletonWrapper.getInstance();
-    chronicleDataService.connect(3);
-
-    name2IdMap = chronicleDataService.getName2IdMap();
-    id2TimeMap = chronicleDataService.getId2TimeMap();
+    chronicleDataService = ChronicleDataService.getInstance();
+    id2TimeMapReference = chronicleDataService.connectId2TimeMap();
+    name2IdMapReference = chronicleDataService.connectName2IdMap();
     System.out.println("Maps done");
     nameBuffer = new StringBuilder();
     profileIdValue = Values.newHeapInstance(LongValue.class);
     count = 0;
     timeValue = Values.newHeapInstance(LongValue.class);
-//    fileLocation = (String) stormConf.get("profile.id.to.profile.file");
-//    file = new File(fileLocation);
-//    ChronicleMapBuilder<Long, IShortProfile> builder =
-//      ChronicleMapBuilder.of(Long.class, IShortProfile.class).
-//        constantValueSizeBySample(new ShortProfile()).
-//        entries(400_000_000);
-//    try {
-//      id2ProfileMap = builder.createPersistedTo(file);
-//    } catch (IOException e) {
-//      // fail fast
-//      throw new RuntimeException(e);
-//    }
     System.out.println("Amend setup done");
   }
 
@@ -70,25 +52,14 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
       for (count = 0; count < screenName.length(); count++) {
         nameBuffer.append(Character.toLowerCase(screenName.charAt(count)));
       }
-      name2IdMap.put(nameBuffer, profileIdValue);
+      name2IdMapReference.map().put(nameBuffer, profileIdValue);
     }
 
     timeValue.setValue(System.currentTimeMillis());
-    id2TimeMap.put(profileIdValue, timeValue);
+    id2TimeMapReference.map().put(profileIdValue, timeValue);
 
     profile.setAuthority(calculateAuthority(profile));
     collector.emit("storeProfile", new backtype.storm.tuple.Values(profile));
-
-//    IShortProfile using = Values.newHeapInstance(IShortProfile.class);
-//    using.setAuthority((byte)profile.getAuthority());
-//    using.setFollowersCount(profile.getFollowersCount());
-//    using.setFriendsCount(profile.getFriendsCount());
-//    using.setPostCount(profile.getPostCount());
-//    using.setVerified(profile.isVerified());
-//    using.setModifiedTime(profile.getModifiedTime());
-//
-//    id2ProfileMap.put(profile.getId(), using);
-//    log().info("id2ProfileMap size is " + id2ProfileMap.longSize());
   }
 
   @Override
@@ -98,7 +69,8 @@ public class AmendProfileBolt extends BaseBasicBolt implements LogAware {
 
   @Override
   public void cleanup() {
-    chronicleDataService.close();
+    chronicleDataService.release(id2TimeMapReference);
+    chronicleDataService.release(name2IdMapReference);
     super.cleanup();
   }
 

@@ -9,7 +9,7 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import my.twister.chronicle.ChronicleDataService;
 import my.twister.storm.beans.Tweet;
-import my.twister.storm.bolts.profile.chronicle.StormCDSSingletonWrapper;
+import my.twister.utils.Constants;
 import my.twister.utils.LogAware;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -26,21 +26,20 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
   private static final Pattern SCREEN_NAME_PATTERN = Pattern.compile("[@＠][a-zA-Z0-9_]+");
 
   private transient MultiCountMetric mentionsMetric;
-  private transient ChronicleMap<CharSequence, LongValue> name2IdMap;
   private transient StringBuilder mentionBuffer = new StringBuilder();
-  public static final int MAX_MENTIONS = 10;
   private transient int count = 0;
   private transient LongValue profileIdValue;
   private transient int resolvedMentionsCount;
   private transient long[] mentions;
-  private ChronicleDataService chronicleDataService;
+  private transient ChronicleDataService chronicleDataService;
+  private transient ChronicleDataService.MapReference<CharSequence, LongValue> name2IdMapReference;
 
   @Override
   public void prepare(Map stormConf, TopologyContext context) {
     super.prepare(stormConf, context);
-    chronicleDataService = StormCDSSingletonWrapper.getInstance();
-    chronicleDataService.connect(3);
-    name2IdMap = chronicleDataService.getName2IdMap();
+    chronicleDataService = ChronicleDataService.getInstance();
+    name2IdMapReference = chronicleDataService.connectName2IdMap();
+
     mentionsMetric = new MultiCountMetric();
     mentionBuffer = new StringBuilder();
     count = 0;
@@ -58,12 +57,12 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
     String contents = tweet.getContents();
     Matcher matcher = SCREEN_NAME_PATTERN.matcher(contents);
     resolvedMentionsCount = 0;
-    while (matcher.find() && resolvedMentionsCount < MAX_MENTIONS) {
+    while (matcher.find() && resolvedMentionsCount < Constants.MAX_MENTIONS_SIZE) {
       mentionBuffer.setLength(0);
       for (count = matcher.start() + 1; count < matcher.end(); count++) {
         mentionBuffer.append(Character.toLowerCase(contents.charAt(count)));
       }
-      profileIdValue = name2IdMap.get(mentionBuffer);
+      profileIdValue = name2IdMapReference.map().get(mentionBuffer);
       if (profileIdValue == null) {
         mentionsMetric.scope("missed_mentions").incr();
       } else {
@@ -91,7 +90,7 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
 
   @Override
   public void cleanup() {
-    chronicleDataService.close();
+    chronicleDataService.release(name2IdMapReference);
     super.cleanup();
   }
 
