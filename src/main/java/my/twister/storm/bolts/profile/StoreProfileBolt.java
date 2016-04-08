@@ -44,8 +44,8 @@ public class StoreProfileBolt extends BaseBasicBolt implements LogAware {
 
     profileIdValue.setValue(profile.getId());
     profileValue.setAuthority(profile.getAuthority());
-    profileValue.setFollowersCount(profile.getFollowersCount());
-    profileValue.setFriendsCount(profile.getFriendsCount());
+    profileValue.setFollowersCount(profile.getFollowersCount() > 0 ? profile.getFollowersCount() : 0);
+    profileValue.setFriendsCount(profile.getFriendsCount() > 0 ? profile.getFriendsCount() : 0);
     profileValue.setModifiedTime(profile.getModifiedTime());
     profileValue.setPostCount(profile.getPostCount());
     profileValue.setVerified(profile.isVerified());
