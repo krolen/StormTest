@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Created by kkulagin on 5/13/2015.
  */
-public class SaveTweetBolt extends BaseBasicBolt implements LogAware {
+public class StoreTweetBolt extends BaseBasicBolt implements LogAware {
 
   private transient LongValue tweetId;
   private transient IShortTweet tweet;
