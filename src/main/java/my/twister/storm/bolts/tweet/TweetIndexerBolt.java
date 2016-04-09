@@ -69,7 +69,7 @@ public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
       long start = dayBeforeStartInMillis + i * MILLIS_PER_HOUR;
       log().info("Connection established");
       // TODO: 3/31/2016 make it dynamic - for now it will fill around 100 days
-      for (int j = 0; j < 1000; j++) {
+      for (int j = 0; j < 10000; j++) {
         time2Indexer.put(start + j * INDEXERS_NUMBER * MILLIS_PER_HOUR, remoteEndpoint);
       }
     }
