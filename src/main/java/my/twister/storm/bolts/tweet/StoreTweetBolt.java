@@ -53,6 +53,7 @@ public class StoreTweetBolt extends BaseBasicBolt implements LogAware {
       }
       tweet.setAuthorId(t.getAuthorId());
       tweet.setCreateDate(t.getCreateDate());
+      tweet.setRetweetedTweetUserId(t.getRetweetedTweetUserId().longValue());
       tweetsDataMap.put(tweetId, tweet);
     }
   }

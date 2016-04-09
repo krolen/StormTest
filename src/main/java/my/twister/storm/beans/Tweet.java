@@ -11,6 +11,7 @@ import java.util.Arrays;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Tweet  {
+
   @JsonProperty("id")
   private long id;
   @JsonProperty("text")
@@ -23,6 +24,10 @@ public class Tweet  {
   @JsonProperty("source")
   private String source;
   private long[] mentions;
+  private Long retweetedTweetUserId = 0L;
+
+  @JsonIgnore // skipped in stream
+  private Profile user;
 
   public Tweet() {
   }
@@ -46,8 +51,6 @@ public class Tweet  {
     this.mentions = mentions;
   }
 
-  @JsonIgnore // skipped in stream
-  private Profile user;
 
   public String getSource() {
     return source;
@@ -73,6 +76,10 @@ public class Tweet  {
     return lang;
   }
 
+  public Long getRetweetedTweetUserId() {
+    return retweetedTweetUserId;
+  }
+
   @JsonSetter
   public void setUser(Profile user) {
     this.user = user;
@@ -88,6 +95,10 @@ public class Tweet  {
     return user;
   }
 
+  @JsonSetter(value = "retweeted_status")
+  public void setRetweetedStatus(RetweetedStatus retweetedStatus) {
+    retweetedTweetUserId = retweetedStatus.getUser().getId();
+  }
 
   @Override
   public String toString() {
