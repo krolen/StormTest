@@ -55,30 +55,31 @@ public class TweetMentionsBolt extends BaseBasicBolt implements LogAware {
     Tweet tweet = (Tweet) input.getValue(0);
 
     String contents = tweet.getContents();
-    Matcher matcher = SCREEN_NAME_PATTERN.matcher(contents);
-    resolvedMentionsCount = 0;
-    while (matcher.find() && resolvedMentionsCount < Constants.MAX_MENTIONS_SIZE) {
-      mentionBuffer.setLength(0);
-      for (count = matcher.start() + 1; count < matcher.end(); count++) {
-        mentionBuffer.append(Character.toLowerCase(contents.charAt(count)));
+    if(contents != null ) {
+      Matcher matcher = SCREEN_NAME_PATTERN.matcher(contents);
+      resolvedMentionsCount = 0;
+      while (matcher.find() && resolvedMentionsCount < Constants.MAX_MENTIONS_SIZE) {
+        mentionBuffer.setLength(0);
+        for (count = matcher.start() + 1; count < matcher.end(); count++) {
+          mentionBuffer.append(Character.toLowerCase(contents.charAt(count)));
+        }
+        profileIdValue = name2IdMapReference.map().get(mentionBuffer);
+        if (profileIdValue == null) {
+          mentionsMetric.scope("missed_mentions").incr();
+        } else {
+          mentions[resolvedMentionsCount] = profileIdValue.getValue();
+          resolvedMentionsCount++;
+        }
       }
-      profileIdValue = name2IdMapReference.map().get(mentionBuffer);
-      if (profileIdValue == null) {
-        mentionsMetric.scope("missed_mentions").incr();
-      } else {
-        mentions[resolvedMentionsCount] = profileIdValue.getValue();
-        resolvedMentionsCount++;
-      }
-    }
 
 //    log().warn("Resolved " + resolvedMentionsCount + " of " + mentionsCount + " mentions.");
-    if(resolvedMentionsCount > 0) {
+      if(resolvedMentionsCount > 0) {
         mentionsMetric.scope("extracted_mentions").incrBy(resolvedMentionsCount);
         long[] result = new long[resolvedMentionsCount - 1];
         System.arraycopy(mentions, 0, result, 0, resolvedMentionsCount - 1);
         tweet.setMentions(result);
+      }
     }
-
     collector.emit("tweet", new backtype.storm.tuple.Values(tweet));
 
   }
