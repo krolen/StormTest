@@ -31,9 +31,9 @@ public class ParserBolt extends BaseBasicBolt implements LogAware {
       } else {
         // TODO: 3/29/2016 optimize to skip unnecessary values using jackson stream reader
         Tweet tweet = objectMapper.readValue(binaryInput, Tweet.class);
-        if(tweet.getUser().getId() > 230835570100L) {
-          collector.emit("anomaly", new Values(input));
-        }
+//        if(tweet.getUser().getId() > 230835570100L) {
+//          collector.emit("anomaly", new Values(binaryInput));
+//        }
         collector.emit("profile", new Values(tweet.getUser()));
         tweet.prepareForSerialization();
         collector.emit("tweet", new Values(tweet));
