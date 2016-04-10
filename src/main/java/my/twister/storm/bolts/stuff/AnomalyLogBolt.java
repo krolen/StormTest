@@ -1,4 +1,4 @@
-package my.twister.storm.bolts.tweet;
+package my.twister.storm.bolts.stuff;
 
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -10,17 +10,16 @@ import my.twister.utils.LogAware;
 /**
  * Created by kkulagin on 5/13/2015.
  */
-public class TweetLogBolt extends BaseBasicBolt implements LogAware {
-
-  private long counter;
+public class AnomalyLogBolt extends BaseBasicBolt implements LogAware {
 
   @Override
   public void execute(Tuple input, BasicOutputCollector collector) {
-    Tweet tweet = (Tweet) input.getValue(0);
-      long l = counter++;
-      if (l % 50 == 0) {
-        log().debug(tweet.toString());
-      }
+    try {
+      byte[] anomaly = input.getBinaryByField("data");
+      log().warn("Anomaly detected: " + new String(anomaly));
+    } catch (Exception e) {
+      log().error("WTF?", e);
+    }
   }
 
   @Override
