@@ -7,8 +7,11 @@ import com.google.common.io.CharStreams;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.stream.IntStream;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Created by kkulagin on 4/11/2016.
@@ -18,22 +21,32 @@ public class JacksonStreamTest {
   public static void main(String[] args) throws IOException {
     JsonFactory jsonF = new JsonFactory();
 
-    try (BufferedReader reader =
-             Files.newBufferedReader(Paths.get("C:\\Projects\\Twister\\StormTest\\target\\classes\\realSampleTweet2.json"));
-         JsonParser jp = jsonF.createParser(reader);
-         TokenBuffer buffer = new TokenBuffer(jp);
+    try (
+
+        InputStream inputStream = Files.newInputStream(Paths.get("C:\\data\\twitter\\firehose_1460399483783.txt.gz"));
+//        BufferedReader reader =
+//             Files.newBufferedReader(Paths.get("C:\\Projects\\Twister\\StormTest\\target\\classes\\realSampleTweet2.json"));
+        InputStream str = new GZIPInputStream(inputStream);
+         JsonParser jp = jsonF.createParser(str);
+//         TokenBuffer buffer = new TokenBuffer(jp);
          ByteArrayOutputStream outputStream = new ByteArrayOutputStream(4096);
+
          JsonGenerator generator = jsonF.createGenerator(outputStream, JsonEncoding.UTF8);
     ){;
 
-
-
-      while (reader.ready()) {
+      int count = 0;
+      while (str.available() > 0 && count++ < 5) {
+        TokenBuffer buffer = new TokenBuffer(jp);
+        outputStream.reset();
         readTweet(jp, buffer);
         buffer.serialize(generator);
         generator.flush();
         System.out.println(outputStream.toString("UTF-8"));
-        outputStream.reset();
+        outputStream.flush();
+        System.out.println("------------");
+        System.out.println("------------");
+        System.out.println("------------");
+        System.out.flush();
       }
 
     } catch (IOException e) {
@@ -60,7 +73,7 @@ public class JacksonStreamTest {
 
       if(token == JsonToken.FIELD_NAME && "timestamp_ms".equals(jp.getCurrentName())) {
         buffer.writeFieldName(jp.getCurrentName());
-        buffer.writeNumber(111111111111111111L);
+        buffer.writeNumber(System.currentTimeMillis());
         jp.nextToken();
       } else {
         buffer.copyCurrentEvent(jp);

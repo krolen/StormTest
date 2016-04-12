@@ -18,13 +18,14 @@ import java.util.Map;
 public class DeleteTweetLogBolt extends BaseRichBolt implements LogAware {
 
   private OutputCollector collector;
-  private long counter;
-  private ObjectMapper objectMapper;
+  private transient long counter;
+  private transient ObjectMapper objectMapper;
 
   @Override
   public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
     this.collector = collector;
     objectMapper = new ObjectMapper();
+    counter = 0;
   }
 
   // TODO: 24.10.2015 check Ask

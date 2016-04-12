@@ -8,17 +8,16 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
-import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.common.util.concurrent.RateLimiter;
 import my.twister.utils.LogAware;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Created by kkulagin on 4/11/2016.
@@ -26,16 +25,19 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FileTestSpout extends BaseRichSpout implements LogAware {
 
   public static final String TWEETS_FILE_LOCATION = "tw.file.location";
-  public static final String RATE_LIMIT = "tw.rate.limit";
+  public static final String TWEETS_RATE_LIMIT = "tw.rate.limit";
+  public static final String TWEETS_FILE_COMPRESSED = "tw.file.compressed";
 
-  private transient BufferedReader reader;
+  private transient InputStream iStream;
   private transient SpoutOutputCollector collector;
   private transient RateLimiter rateLimiter;
-  private transient TokenBuffer buffer;
   private transient JsonGenerator generator;
   private transient JsonParser jp;
   private transient ByteArrayOutputStream outputStream;
   private transient AtomicLong ids;
+  private boolean compressed;
+  private String dataFileLocation;
+  private JsonFactory jsonFactory;
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
@@ -47,34 +49,63 @@ public class FileTestSpout extends BaseRichSpout implements LogAware {
     this.collector = collector;
     try {
       ids = new AtomicLong(0);
-      long rateLimit = (long) conf.get(RATE_LIMIT);
+      long rateLimit = (long) conf.get(TWEETS_RATE_LIMIT);
       rateLimiter = RateLimiter.create(rateLimit);
-      String dataFileLocation = (String) conf.get(TWEETS_FILE_LOCATION);
-      JsonFactory jsonF = new JsonFactory();
-      reader = Files.newBufferedReader(Paths.get(dataFileLocation));
-      jp = jsonF.createParser(reader);
-      buffer = new TokenBuffer(jp);
-      outputStream = new ByteArrayOutputStream(4096);
-      generator = jsonF.createGenerator(outputStream, JsonEncoding.UTF8);
 
+      jsonFactory = new JsonFactory();
+
+      outputStream = new ByteArrayOutputStream(16384);
+      generator = jsonFactory.createGenerator(outputStream, JsonEncoding.UTF8);
+
+      dataFileLocation = (String) conf.get(TWEETS_FILE_LOCATION);
+      compressed = Optional.ofNullable((Boolean) conf.get(TWEETS_FILE_COMPRESSED)).map(Boolean::booleanValue).orElse(false);
+
+      init();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private void init() throws IOException {
+//    closeIt(iStream);
+    closeIt(jp);
+    if (compressed) {
+      iStream = new GZIPInputStream(Files.newInputStream(Paths.get(dataFileLocation)));
+    } else {
+      iStream = Files.newInputStream(Paths.get(dataFileLocation));
+    }
+    jp = jsonFactory.createParser(iStream);
   }
 
   @Override
   public void nextTuple() {
     rateLimiter.acquire();
     try {
-      while (reader.ready()) {
-        readTweet(jp, buffer);
-        buffer.serialize(generator);
-        generator.flush();
-        collector.emit(new Values(outputStream.toByteArray()), ids.getAndIncrement());
-//        collector.emit(new Values(outputStream.toString(StandardCharsets.UTF_8.name())), ids.getAndIncrement());
+      TokenBuffer buffer = new TokenBuffer(jp);
+      readTweet(jp, buffer);
+      buffer.serialize(generator);
+      generator.flush();
+      collector.emit(new Values(outputStream.toByteArray()), ids.getAndIncrement());
+      if (ids.get() % 100_000 == 0) {
+        log().info("Emitted " + ids.get());
       }
     } catch (IOException e) {
-      log().error("Error emitting tweet", e);
+      try {
+        init();
+      } catch (IOException e1) {
+        throw new RuntimeException(e1);
+      }
+    } catch (Exception e) {
+      try {
+        log().error("Error emitting tweet", e);
+        StringWriter error = new StringWriter();
+        e.printStackTrace(new PrintWriter(error));
+        collector.emit("err", new Values("{ Error : " + error.toString()));
+      } catch (Exception e1) {
+        e1.printStackTrace();
+        log().error("Error sending error", e1);
+      }
+
     } finally {
       outputStream.reset();
     }
@@ -90,16 +121,16 @@ public class FileTestSpout extends BaseRichSpout implements LogAware {
     int count = 1;
     while (count > 0) {
       token = jp.nextToken();
-      if (token == JsonToken.END_OBJECT) {
-        count--;
-      } else if (token == JsonToken.START_OBJECT) {
-        count++;
-      }
-
       if (token == JsonToken.FIELD_NAME && "timestamp_ms".equals(jp.getCurrentName())) {
         buffer.writeFieldName(jp.getCurrentName());
-        buffer.writeNumber(System.currentTimeMillis());
         jp.nextToken();
+        buffer.writeNumber(System.currentTimeMillis());
+      } else if (token == JsonToken.END_OBJECT) {
+        count--;
+        buffer.copyCurrentEvent(jp);
+      } else if (token == JsonToken.START_OBJECT) {
+        count++;
+        buffer.copyCurrentEvent(jp);
       } else {
         buffer.copyCurrentEvent(jp);
       }
@@ -109,10 +140,9 @@ public class FileTestSpout extends BaseRichSpout implements LogAware {
   @Override
   public void close() {
     super.close();
-    closeIt(reader);
     closeIt(generator);
-    closeIt(buffer);
     closeIt(jp);
+    closeIt(iStream);
   }
 
   private void closeIt(Closeable closeable) {

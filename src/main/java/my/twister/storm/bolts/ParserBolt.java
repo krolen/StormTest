@@ -1,9 +1,11 @@
 package my.twister.storm.bolts;
 
+import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Fields;
+import backtype.storm.tuple.MessageId;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,13 +14,25 @@ import my.twister.utils.LogAware;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by kkulagin on 5/15/2015.
  */
 public class ParserBolt extends BaseBasicBolt implements LogAware {
 
-  private ObjectMapper objectMapper = new ObjectMapper();
+  private transient ObjectMapper objectMapper;
+  private transient AtomicLong counter;
+  private transient int thisTaskIndex;
+
+  @Override
+  public void prepare(Map stormConf, TopologyContext context) {
+    super.prepare(stormConf, context);
+    objectMapper = new ObjectMapper();
+    counter = new AtomicLong(0);
+    thisTaskIndex = context.getThisTaskIndex();
+  }
 
   @Override
   public void execute(Tuple input, BasicOutputCollector collector) {
@@ -37,6 +51,9 @@ public class ParserBolt extends BaseBasicBolt implements LogAware {
         collector.emit("profile", new Values(tweet.getUser()));
         tweet.prepareForSerialization();
         collector.emit("tweet", new Values(tweet));
+        if(counter.incrementAndGet() % 100_000 == 0) {
+          log().info("Parsed by " + thisTaskIndex + " task: " + counter.get());
+        }
       }
     } catch (Exception e) {
       log().error("Error parsing tweet", e);
