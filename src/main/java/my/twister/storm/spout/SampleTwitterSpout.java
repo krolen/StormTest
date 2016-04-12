@@ -26,11 +26,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
 
-  private TwitterStream twitterStream;
-  private Queue<String> tweetsCache = new ArrayBlockingQueue<>(100);
-  private SpoutOutputCollector collector;
-  private AtomicInteger counter = new AtomicInteger(0);
-  private AtomicLong ids = new AtomicLong(1);
+  private transient TwitterStream twitterStream;
+  private transient Queue<String> tweetsCache;
+  private transient SpoutOutputCollector collector;
+  private transient AtomicInteger counter;
+  private transient AtomicLong ids;
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
@@ -41,6 +41,9 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
   @Override
   public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
     this.collector = collector;
+    tweetsCache = new ArrayBlockingQueue<>(100);
+    counter = new AtomicInteger(0);
+    ids = new AtomicLong(1);
     setup(conf);
   }
 
@@ -56,7 +59,7 @@ public class SampleTwitterSpout extends BaseRichSpout implements LogAware {
     if (tweet != null) {
       collector.emit(new Values(tweet.getBytes(StandardCharsets.UTF_8)), ids.getAndIncrement());
       int i = counter.incrementAndGet();
-      if (i % 5 == 0) {
+      if (i % 100_000 == 0) {
         log().debug("Consumed " + i + " tweets.");
       }
     }
