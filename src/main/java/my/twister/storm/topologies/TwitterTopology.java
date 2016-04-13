@@ -46,7 +46,7 @@ public abstract class TwitterTopology implements LogAware {
   protected StormTopology topology() {
     TopologyBuilder builder = new TopologyBuilder();
     builder.setSpout("rootSpout", createRootSpout(), 1);
-    builder.setBolt("parserBolt", new ParserBolt(), 3).setNumTasks(2).shuffleGrouping("rootSpout");
+    builder.setBolt("parserBolt", new ParserBolt(), 3).setNumTasks(3).shuffleGrouping("rootSpout");
 
     builder.setBolt("anomalyBolt", new AnomalyLogBolt(), 1).setNumTasks(1).shuffleGrouping("parserBolt", "anomaly");
 
@@ -54,7 +54,7 @@ public abstract class TwitterTopology implements LogAware {
 
     builder.setBolt("amendProfileBolt", new AmendProfileBolt(), 3).setNumTasks(2).shuffleGrouping("parserBolt", "profile");
 
-    builder.setBolt("storeProfileBolt", new StoreProfileBolt(), 2).setNumTasks(2).shuffleGrouping("amendProfileBolt", "storeProfile");
+    builder.setBolt("storeProfileBolt", new StoreProfileBolt(), 1).setNumTasks(1).shuffleGrouping("amendProfileBolt", "storeProfile");
 
     builder.setBolt("tweetMentions", new TweetMentionsBolt(), 2).setNumTasks(2).shuffleGrouping("parserBolt", "tweet");
 

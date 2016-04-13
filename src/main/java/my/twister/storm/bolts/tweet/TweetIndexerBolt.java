@@ -8,6 +8,7 @@ import backtype.storm.tuple.Tuple;
 import my.twister.storm.beans.Tweet;
 import my.twister.utils.Constants;
 import my.twister.utils.LogAware;
+import my.twister.utils.Utils;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
@@ -35,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
 
   public static final int INDEXERS_NUMBER = 3;
-  private static final long MILLIS_PER_HOUR = Duration.ofHours(1).toMillis();
 
   private transient WebSocketClient client;
   private NavigableMap<Long, RemoteEndpoint> time2Indexer = new TreeMap<>();
@@ -66,11 +66,11 @@ public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
       log().info("Establishing web socket connection to " + indexerUrl);
       RemoteEndpoint remoteEndpoint = openSocket(indexerUrl);
       log().info("Connection established");
-      long start = dayBeforeStartInMillis + i * MILLIS_PER_HOUR;
+      long start = dayBeforeStartInMillis + i * Utils.MILLIS_PER_HOUR;
       log().info("Connection established");
       // TODO: 3/31/2016 make it dynamic - for now it will fill around 100 days
       for (int j = 0; j < 10000; j++) {
-        time2Indexer.put(start + j * INDEXERS_NUMBER * MILLIS_PER_HOUR, remoteEndpoint);
+        time2Indexer.put(start + j * INDEXERS_NUMBER * Utils.MILLIS_PER_HOUR, remoteEndpoint);
       }
     }
 
@@ -93,7 +93,7 @@ public class TweetIndexerBolt extends BaseBasicBolt implements LogAware {
       log().error("Cannot find time entry for tweet " + tweet);
     } else {
       RemoteEndpoint prevHourEndpoint = floorEntry.getValue();
-      RemoteEndpoint prevPrevHourEndpoint = time2Indexer.get(floorEntry.getKey() - MILLIS_PER_HOUR);
+      RemoteEndpoint prevPrevHourEndpoint = time2Indexer.get(floorEntry.getKey() - Utils.MILLIS_PER_HOUR);
       send(tweet, prevHourEndpoint);
       send(tweet, prevPrevHourEndpoint);
     }

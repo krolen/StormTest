@@ -14,6 +14,7 @@ import my.twister.utils.LogAware;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -25,6 +26,7 @@ public class ParserBolt extends BaseBasicBolt implements LogAware {
   private transient ObjectMapper objectMapper;
   private transient AtomicLong counter;
   private transient int thisTaskIndex;
+  private static final long TWO_HOURS = Duration.ofHours(2).toMillis();
 
   @Override
   public void prepare(Map stormConf, TopologyContext context) {
@@ -45,6 +47,11 @@ public class ParserBolt extends BaseBasicBolt implements LogAware {
       } else {
         // TODO: 3/29/2016 optimize to skip unnecessary values using jackson stream reader
         Tweet tweet = objectMapper.readValue(binaryInput, Tweet.class);
+        if(tweet.getCreateDate() < System.currentTimeMillis() - TWO_HOURS) {
+          log().warn("Outdated tweet found " + tweet);
+          collector.emit("anomaly", new Values(binaryInput));
+          return;
+        }
 //        if(tweet.getUser().getId() > 230835570100L) {
 //          collector.emit("anomaly", new Values(binaryInput));
 //        }
