@@ -38,10 +38,9 @@ public class StoreTweetBolt extends BaseBasicBolt implements LogAware {
   public void prepare(Map stormConf, TopologyContext context) {
     super.prepare(stormConf, context);
     chronicleDataService = ChronicleDataService.getInstance();
-    chronicleDataService.connectTweetsMaps(3);
+    chronicleDataService.connectTweetsMaps(5);
     tweet = Values.newHeapInstance(IShortTweet.class);
     tweetId = Values.newHeapInstance(LongValue.class);
-    long millisPerHour = Duration.ofHours(1).toMillis();
   }
 
   @Override
