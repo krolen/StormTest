@@ -1,10 +1,5 @@
 package my.twister.storm.topologies;
 
-import backtype.storm.Config;
-import backtype.storm.LocalCluster;
-import backtype.storm.generated.StormTopology;
-import backtype.storm.topology.IRichSpout;
-import backtype.storm.topology.TopologyBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import my.twister.storm.beans.Profile;
 import my.twister.storm.beans.Tweet;
@@ -12,6 +7,11 @@ import my.twister.storm.bolts.ErrorBolt;
 import my.twister.storm.bolts.ParserBolt;
 import my.twister.storm.bolts.stuff.LogBolt;
 import my.twister.storm.spout.FileTestSpout;
+import org.apache.storm.Config;
+import org.apache.storm.LocalCluster;
+import org.apache.storm.generated.StormTopology;
+import org.apache.storm.topology.IRichSpout;
+import org.apache.storm.topology.TopologyBuilder;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;

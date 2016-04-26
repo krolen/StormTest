@@ -1,7 +1,7 @@
 package my.twister.storm.topologies;
 
-import backtype.storm.topology.IRichSpout;
 import my.twister.storm.spout.SampleTwitterSpout;
+import org.apache.storm.topology.IRichSpout;
 
 /**
  * Created by kkulagin on 10/23/2015.

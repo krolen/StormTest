@@ -1,10 +1,5 @@
 package my.twister.storm.topologies;
 
-import backtype.storm.Config;
-import backtype.storm.generated.StormTopology;
-import backtype.storm.metric.LoggingMetricsConsumer;
-import backtype.storm.topology.IRichSpout;
-import backtype.storm.topology.TopologyBuilder;
 import my.twister.storm.beans.DeleteTweet;
 import my.twister.storm.beans.Profile;
 import my.twister.storm.beans.Tweet;
@@ -18,6 +13,11 @@ import my.twister.storm.bolts.tweet.StoreTweetBolt;
 import my.twister.storm.bolts.tweet.TweetIndexerBolt;
 import my.twister.storm.bolts.tweet.TweetMentionsBolt;
 import my.twister.utils.LogAware;
+import org.apache.storm.Config;
+import org.apache.storm.generated.StormTopology;
+import org.apache.storm.metric.LoggingMetricsConsumer;
+import org.apache.storm.topology.IRichSpout;
+import org.apache.storm.topology.TopologyBuilder;
 
 /**
  * Created by kkulagin on 12/14/2015.

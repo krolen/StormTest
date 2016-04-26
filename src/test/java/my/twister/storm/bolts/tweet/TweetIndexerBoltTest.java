@@ -1,12 +1,12 @@
 package my.twister.storm.bolts.tweet;
 
-import backtype.storm.generated.GlobalStreamId;
-import backtype.storm.task.TopologyContext;
-import backtype.storm.tuple.Fields;
-import backtype.storm.tuple.MessageId;
-import backtype.storm.tuple.Tuple;
 import com.google.common.collect.ImmutableMap;
 import my.twister.storm.beans.Tweet;
+import org.apache.storm.generated.GlobalStreamId;
+import org.apache.storm.task.TopologyContext;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.MessageId;
+import org.apache.storm.tuple.Tuple;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -179,6 +179,11 @@ public class TweetIndexerBoltTest {
 
         @Override
         public List<Object> getValues() {
+          return null;
+        }
+
+        @Override
+        public GlobalStreamId getSourceGlobalStreamId() {
           return null;
         }
       }, null);

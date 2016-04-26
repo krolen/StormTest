@@ -1,7 +1,8 @@
 package my.twister.storm.spout;
 
-import backtype.storm.spout.RawScheme;
-import backtype.storm.tuple.Fields;
+
+import org.apache.storm.spout.RawScheme;
+import org.apache.storm.tuple.Fields;
 
 /**
  * Created by kkulagin on 5/13/2015.
