@@ -1,5 +1,6 @@
 package my.twister.storm.topologies;
 
+import com.google.common.collect.Lists;
 import my.twister.storm.spout.FileTestSpout;
 import my.twister.utils.Constants;
 import org.apache.storm.Config;
@@ -18,7 +19,7 @@ public class RemoteFileTopology extends TwitterTopology {
 
     RemoteFileTopology thisTopology = new RemoteFileTopology();
     try {
-      StormSubmitter.submitTopology("fromFile", thisTopology.config(), thisTopology.topology());
+      StormSubmitter.submitTopology("fromFileSelfKill", thisTopology.config(), thisTopology.topology());
     } catch (Exception e) {
       e.printStackTrace();
       System.err.println("Error submitting Topology" +  e.getMessage());
@@ -34,8 +35,8 @@ public class RemoteFileTopology extends TwitterTopology {
   @Override
   protected Config config() {
     Config conf = super.config();
-    conf.put(Config.NIMBUS_HOST, "10.11.18.53");
-    conf.put(Config.TOPOLOGY_NAME, "fromFile");
+    conf.put(Config.NIMBUS_SEEDS, Lists.newArrayList("tssa001.con.qa.yyz.corp.pvt", "10.11.18.53"));
+    conf.put(Config.TOPOLOGY_NAME, "fromFileSelfKill");
     conf.put(Constants.TWEET_INDEXER_HOST, "10.11.18.53");
 
     conf.put(FileTestSpout.TWEETS_FILE_LOCATION, "/data/twitter/data.gz");

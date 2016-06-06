@@ -1,5 +1,6 @@
 package my.twister.storm.topologies;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Uninterruptibles;
 import my.twister.storm.beans.Profile;
 import my.twister.storm.beans.Tweet;
@@ -32,6 +33,8 @@ public class LocalFileTwitterTopology extends TwitterTopology {
     Config conf = super.config();
 //    conf.put(Config.TOPOLOGY_DEBUG, true);
 
+    conf.put(Config.NIMBUS_SEEDS, Lists.newArrayList("SYS10017.sysomos.pvt", "localhost", "127.0.0.1"));
+
     conf.put(FileTestSpout.TWEETS_FILE_LOCATION, "C:\\data\\twitter\\firehose_1460399483783.txt.gz");
     conf.put(FileTestSpout.TWEETS_RATE_LIMIT, 30000);
     conf.put(FileTestSpout.TWEETS_FILE_COMPRESSED, true);
@@ -61,7 +64,7 @@ public class LocalFileTwitterTopology extends TwitterTopology {
     TwitterTopology thisTopology = new LocalFileTwitterTopology();
     String topologyName = "sampleTwitterStream";
     cluster.submitTopology(topologyName, thisTopology.config(), thisTopology.topology());
-    Uninterruptibles.sleepUninterruptibly(200, TimeUnit.SECONDS);
+    Uninterruptibles.sleepUninterruptibly(30, TimeUnit.SECONDS);
     cluster.killTopology(topologyName);
     cluster.shutdown();
   }

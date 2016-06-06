@@ -3,19 +3,24 @@ package my.twister.storm.spout;
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.google.common.util.concurrent.RateLimiter;
+import com.google.common.util.concurrent.Uninterruptibles;
 import my.twister.utils.LogAware;
+import org.apache.storm.Config;
+import org.apache.storm.LocalCluster;
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichSpout;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
+import org.apache.storm.utils.NimbusClient;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 
@@ -38,6 +43,8 @@ public class FileTestSpout extends BaseRichSpout implements LogAware {
   private boolean compressed;
   private String dataFileLocation;
   private JsonFactory jsonFactory;
+  private NimbusClient nimbusClient;
+  private String topologyName;
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
@@ -46,6 +53,8 @@ public class FileTestSpout extends BaseRichSpout implements LogAware {
 
   @Override
   public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+    topologyName = (String) conf.get(Config.TOPOLOGY_NAME);
+//    nimbusClient = NimbusClient.getConfiguredClient(conf);
     this.collector = collector;
     try {
       ids = new AtomicLong(0);
@@ -88,6 +97,8 @@ public class FileTestSpout extends BaseRichSpout implements LogAware {
       collector.emit(new Values(outputStream.toByteArray()), ids.getAndIncrement());
       if (ids.get() % 100_000 == 0) {
         log().info("Emitted " + ids.get());
+        Uninterruptibles.sleepUninterruptibly(5, TimeUnit.SECONDS);
+//        nimbusClient.getClient().killTopology(topologyName);
       }
     } catch (IOException e) {
       try {
